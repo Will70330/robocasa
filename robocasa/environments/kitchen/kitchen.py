@@ -622,8 +622,11 @@ class Kitchen(ManipulationEnv, metaclass=KitchenEnvMeta):
 
         # setup rendering for this layout
         if self.renderer == "mjviewer":
+            # dict layout_ids (custom layouts loaded from YAML) are unhashable;
+            # fall back to the default camera config for those.
+            _cam_key = self.layout_id if not isinstance(self.layout_id, dict) else None
             camera_config = CamUtils.LAYOUT_CAMS.get(
-                self.layout_id, CamUtils.DEFAULT_LAYOUT_CAM
+                _cam_key, CamUtils.DEFAULT_LAYOUT_CAM
             )
             self.renderer_config = {"cam_config": camera_config}
 

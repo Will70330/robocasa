@@ -73,6 +73,10 @@ class LayoutType(IntEnum):
     LAYOUT059 = 59
     LAYOUT060 = 60
 
+    # MessyMem custom layouts
+    LAYOUT_MESSYMEM_001 = 61
+    LAYOUT_MESSYMEM_002 = 62
+
     # negative values correspond to groups (see LAYOUT_GROUPS_TO_IDS)
     TEST = -1
     TRAIN = -2
@@ -80,15 +84,17 @@ class LayoutType(IntEnum):
     NO_ISLAND = -4
     ISLAND = -5
     DINING = -6
+    MESSYMEM = -7
 
 
 LAYOUT_GROUPS_TO_IDS = {
-    -1: list(range(1, 11)),  # test
-    -2: list(range(11, 61)),  # train
-    -3: list(range(1, 61)),  # train and test
-    -4: [1, 3, 5, 6, 8],  # no island
-    -5: [2, 4, 7, 9, 10],  # island
-    -6: [2, 4, 7, 8, 9, 10],  # dining
+    -1: list(range(1, 11)),       # test
+    -2: list(range(11, 61)),      # train
+    -3: list(range(1, 61)),       # train and test
+    -4: [1, 3, 5, 6, 8],         # no island
+    -5: [2, 4, 7, 9, 10],        # island
+    -6: [2, 4, 7, 8, 9, 10],     # dining
+    -7: [61, 62],                 # messymem custom layouts
 }
 
 
@@ -194,9 +200,16 @@ def get_layout_path(layout_id):
     else:
         raise ValueError
 
-    layout_num = int(re.findall(r"\d+", layout_name)[0])
-    is_test_layout = 1 <= layout_num <= 10
+    # Use the integer ID (not the digit extracted from the name) to determine
+    # folder — custom layouts like LAYOUT_MESSYMEM_002 have names whose embedded
+    # digit ("002" → 2) would wrongly imply "test", but their ID (62) is outside
+    # the standard 1-10 test range.
+    int_id = int(layout_id) if not isinstance(layout_id, LayoutType) else layout_id.value
+    is_test_layout = 1 <= int_id <= 10
     layout_folder = "test" if is_test_layout else "train"
+    # Custom messymem layouts live in the test/ folder regardless of their ID.
+    if layout_name.startswith("layout_messymem"):
+        layout_folder = "test"
     return xml_path_completion(
         f"scenes/kitchen_layouts/{layout_folder}/{layout_name}.yaml",
         root=robocasa.models.assets_root,
