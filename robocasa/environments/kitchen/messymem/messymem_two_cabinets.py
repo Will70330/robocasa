@@ -195,7 +195,7 @@ class MessymemTwoCabinets(Kitchen):
     # How open the target cabinet must be to count as "found" (0-1 normalized).
     # Default robocasa threshold is 0.90 (fully open); 0.35 lets the door be
     # ~1/3 open which is enough for perception to see inside.
-    _OPEN_THRESHOLD = 0.35
+    _OPEN_THRESHOLD = 0.70
 
     def _check_success(self):
         """
