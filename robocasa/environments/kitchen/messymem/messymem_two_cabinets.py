@@ -1,23 +1,21 @@
 """
-messymem_two_cabinets.py — MessyMem two-cabinet scene and task definition.
+messymem_two_cabinets.py — MessyMem two-cabinet scene task.
 
 Scene: layout_messymem_001 (normal-size kitchen, layout ID 61).
 
 Cabinet contents (both start CLOSED at reset):
-  cab_1  (left upper hinge cabinet)  — pantry items:
-      ketchup, cereal, spaghetti_box, canned_food, mayonnaise
+  cab_1 — pantry items : ketchup, cereal, spaghetti_box, canned_food, mayonnaise
+  cab_2 — fruits       : apple, avocado, lime, lemon, banana, pear
 
-  cab_2  (right upper hinge cabinet) — fruits:
-      apple, avocado, lime, lemon, banana, pineapple
+Counter objects:
+  Below cab_1 : orange, baguette
+  Below cab_2 : onion, bagged_food, pineapple
 
-Counter distractors (on counter_main, near each cabinet):
-  Below cab_1: orange, baguette
-  Below cab_2: onion, bagged_food
+High-level goal: "Open the upper cabinets and find the banana."
 
-Objectives grow in robocasa_sim.py (Objectives 2-4):
-  - Obj 2: composite task with NavigateKitchen + OpenCabinet + pineapple detection
-  - Obj 3: Inspect primitive
-  - Obj 4: full MemoryServer / policy server integration
+Success (robocasa-native): cab_2 is open.
+Primitive sequencing and subtask tracking live entirely in the external
+planner (MockPlan in robocasa_sim.py, PlannerServer in Objective 4).
 """
 
 from robocasa.environments.kitchen.kitchen import *
@@ -27,47 +25,43 @@ class MessymemTwoCabinets(Kitchen):
     """
     MessyMem Two-Cabinet scene task.
 
-    Sets up the messymem_001 kitchen with specific objects in two upper
-    cabinets and on the counter below them.  Both cabinets start CLOSED;
-    objects inside are revealed as each cabinet door is opened.
+    Sets up the messymem_001 kitchen with objects in two upper cabinets and
+    on the counter below them.  Both cabinets start CLOSED.
 
-    The high-level goal is: "Open the upper cabinets and find the pineapple."
-    Composite success conditions are added in Objective 2.
+    _check_success() follows the robocasa convention: it checks only the
+    final physical end-state (cab_2 is open), not intermediate steps.
+    Primitive sequencing is handled externally by the planner.
     """
 
     def __init__(self, *args, **kwargs):
-        # Include "aigen" registry so aigen-only categories (pineapple,
-        # spaghetti_box) are resolvable.  The default is ("objaverse",
-        # "lightwheel") which silently produces an empty valid-category list
-        # for aigen-only objects and crashes on rng.choice([]).
+        # Include "aigen" registry so aigen-only categories (spaghetti_box)
+        # are resolvable.  The default ("objaverse", "lightwheel") would
+        # produce an empty valid-category list and crash on rng.choice([]).
         kwargs.setdefault("obj_registries", ("objaverse", "lightwheel", "aigen"))
         super().__init__(*args, **kwargs)
 
     # ── Fixture references ────────────────────────────────────────────────────
 
+    # Objects in each cabinet — used for random target selection.
+    _CAB1_OBJECTS = ["ketchup", "cereal", "spaghetti_box", "canned_food", "mayonnaise"]
+    _CAB2_OBJECTS = ["apple", "avocado", "lime", "lemon", "banana", "pear"]
+
     def _setup_kitchen_references(self):
-        """
-        Register named references to cab_1, cab_2, and the back-wall counter.
-
-        Fixture names in self.fixtures follow the pattern:
-            {yaml_name}_{group_name}
-        e.g.  "cab_1" under "main_group" → "cab_1_main_group"
-
-        get_fixture(str) uses substring matching so "cab_1" reliably finds
-        "cab_1_main_group" without hardcoding the group suffix.
-        """
         super()._setup_kitchen_references()
 
         self.cab1 = self.register_fixture_ref("cab1", dict(id="cab_1"))
         self.cab2 = self.register_fixture_ref("cab2", dict(id="cab_2"))
-
-        # Back-wall counter that both upper cabinets sit above.
-        # register_fixture_ref caches the result so the ref=self.cab1 hint
-        # is only used the first time to find the right counter.
         self.counter = self.register_fixture_ref(
-            "counter",
-            dict(id=FixtureType.COUNTER, ref=self.cab1),
+            "counter", dict(id=FixtureType.COUNTER, ref=self.cab1)
         )
+
+        # Pick a random target object from either cabinet each episode.
+        all_targets = (
+            [(obj, "cab1") for obj in self._CAB1_OBJECTS] +
+            [(obj, "cab2") for obj in self._CAB2_OBJECTS]
+        )
+        idx = self.rng.integers(len(all_targets))
+        self.target_obj, self.target_cab_attr = all_targets[idx]
 
         # Robot spawns facing cab_1 (leftmost upper cabinet).
         self.init_robot_base_ref = self.cab1
@@ -75,9 +69,6 @@ class MessymemTwoCabinets(Kitchen):
     # ── Scene initialisation ──────────────────────────────────────────────────
 
     def _setup_scene(self):
-        """
-        Place objects (super()), close both cabinets, then orient tall objects.
-        """
         super()._setup_scene()
         self.cab1.close_door(env=self)
         self.cab2.close_door(env=self)
@@ -86,24 +77,15 @@ class MessymemTwoCabinets(Kitchen):
 
     def get_ep_meta(self):
         ep_meta = super().get_ep_meta()
-        ep_meta["lang"] = "Open the upper cabinets and find the pineapple."
+        name = self.target_obj.replace("_", " ")
+        ep_meta["lang"] = f"Open the upper cabinets and find the {name}."
+        ep_meta["target_obj"] = self.target_obj
+        ep_meta["target_cab"] = self.target_cab_attr
         return ep_meta
 
     # ── Object placements ─────────────────────────────────────────────────────
 
     def _get_obj_cfgs(self):
-        """
-        Define all graspable/interactable objects for this scene.
-
-        Counter placement follows the pattern from restock_canned_food.py:
-          - First object uses pos=("ref", -1.0) to anchor near the target
-            cabinet; subsequent objects in the same area use reuse_region_from.
-        Cabinet placement follows the pattern from stack_cans.py:
-          - size=(1.0, 0.15) lets the placer scatter objects across the full
-            cabinet width in a thin back-of-shelf strip.
-          - All objects in the same cabinet share the same spec; the placer
-            handles collision avoidance automatically.
-        """
         cfgs = []
 
         # ── Counter below cab_1: orange, baguette ─────────────────────────────
@@ -124,15 +106,13 @@ class MessymemTwoCabinets(Kitchen):
             graspable=True,
             placement=dict(
                 fixture=self.counter,
-                reuse_region_from="orange",   # same counter strip near cab_1
+                reuse_region_from="orange",
                 size=(1.0, 0.30),
                 pos=(0, 0),
             ),
         ))
 
-        # ── Counter below cab_2: onion, bagged_food ───────────────────────────
-        # bagged_food has graspable=False in the registry — it is a visual
-        # distractor, not a pick-place target.
+        # ── Counter below cab_2: onion, bagged_food, pineapple ────────────────
         cfgs.append(dict(
             name="onion",
             obj_groups="onion",
@@ -150,22 +130,28 @@ class MessymemTwoCabinets(Kitchen):
             graspable=False,
             placement=dict(
                 fixture=self.counter,
-                reuse_region_from="onion",    # same counter strip near cab_2
+                reuse_region_from="onion",
+                size=(1.0, 0.30),
+                pos=(0, 0),
+            ),
+        ))
+        cfgs.append(dict(
+            name="pineapple",
+            obj_groups="pineapple",
+            graspable=False,
+            placement=dict(
+                fixture=self.counter,
+                reuse_region_from="onion",
                 size=(1.0, 0.30),
                 pos=(0, 0),
             ),
         ))
 
         # ── Inside cab_1: pantry items ────────────────────────────────────────
-        # pos=(None, None): fully random placement inside the cabinet —
-        # the placer samples valid non-overlapping positions automatically.
-        # size=(1.0, 0.50): allow placement across the full width and half the
-        # depth, giving maximum freedom with 5 objects.
-        # graspable=False for spaghetti_box (non-graspable in registry).
         cab1_items = [
             ("ketchup",       "ketchup",       True),
             ("cereal",        "cereal",        True),
-            ("spaghetti_box", "spaghetti_box", False),
+            ("spaghetti_box", "spaghetti_box", False),  # non-graspable in registry
             ("canned_food",   "canned_food",   True),
             ("mayonnaise",    "mayonnaise",    True),
         ]
@@ -181,16 +167,14 @@ class MessymemTwoCabinets(Kitchen):
                 ),
             ))
 
-        # ── Inside cab_2: fruits ──────────────────────────────────────────────
-        # Same fully-random pattern. Pineapple is the visual detection target
-        # (non-graspable in the registry; it just needs to appear in the scene).
+        # ── Inside cab_2: fruits — banana is the high-level goal object ───────
         cab2_items = [
-            ("apple",     "apple",     True),
-            ("avocado",   "avocado",   True),
-            ("lime",      "lime",      True),
-            ("lemon",     "lemon",     True),
-            ("banana",    "banana",    True),
-            ("pineapple", "pineapple", False),
+            ("apple",   "apple",   True),
+            ("avocado", "avocado", True),
+            ("lime",    "lime",    True),
+            ("lemon",   "lemon",   True),
+            ("banana",  "banana",  True),
+            ("pear",    "pear",    True),
         ]
         for name, group, graspable in cab2_items:
             cfgs.append(dict(
@@ -206,16 +190,18 @@ class MessymemTwoCabinets(Kitchen):
 
         return cfgs
 
-    # ── Success condition (stub) ──────────────────────────────────────────────
+    # ── Success condition ─────────────────────────────────────────────────────
+
+    # How open the target cabinet must be to count as "found" (0-1 normalized).
+    # Default robocasa threshold is 0.90 (fully open); 0.35 lets the door be
+    # ~1/3 open which is enough for perception to see inside.
+    _OPEN_THRESHOLD = 0.35
 
     def _check_success(self):
         """
-        Placeholder — always returns False.
-
-        Objective 2 will add composite success conditions:
-          - NavigateKitchen sub-goal
-          - OpenCabinet sub-goal
-          - High-level: pineapple detected and added to scene graph
-        The env runs with ignore_done=True so this never terminates early.
+        Final physical end-state: the cabinet containing the target object is
+        open at least _OPEN_THRESHOLD of its full range.
+        Follows the robocasa convention — one check, final state only.
         """
-        return False
+        target_cab = getattr(self, self.target_cab_attr)
+        return target_cab.is_open(env=self, th=self._OPEN_THRESHOLD)

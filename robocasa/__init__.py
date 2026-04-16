@@ -985,6 +985,9 @@ from robocasa.environments.kitchen.atomic.kitchen_toaster import (
 from robocasa.environments.kitchen.messymem.messymem_two_cabinets import (
     MessymemTwoCabinets,
 )
+from robocasa.environments.kitchen.messymem.inspect_cabinet import (
+    InspectCabinet,
+)
 
 try:
     import mimicgen
