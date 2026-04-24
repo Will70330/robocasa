@@ -66,6 +66,19 @@ class MessymemTwoCabinets(Kitchen):
         # Robot spawns facing cab_1 (leftmost upper cabinet).
         self.init_robot_base_ref = self.cab1
 
+    # ── Spawn offset ────────────────────────────────────────────────────────
+    # Pull the robot spawn 0.15m back from the counter so the base clears
+    # the cabinet when moving.
+    _SPAWN_PULLBACK = 0.15
+
+    def _load_model(self, **kwargs):
+        super()._load_model(**kwargs)
+        import numpy as np
+        yaw = self.init_robot_base_ori_anchor[2]
+        self.init_robot_base_pos_anchor[:2] -= self._SPAWN_PULLBACK * np.array(
+            [np.cos(yaw), np.sin(yaw)]
+        )
+
     # ── Scene initialisation ──────────────────────────────────────────────────
 
     def _setup_scene(self):
