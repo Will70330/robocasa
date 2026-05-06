@@ -1,0 +1,192 @@
+# layout_messymem_simple.yaml
+#
+# Minimal kitchen for testing the perception + planning pipeline.
+# Built from the messymem_001 room shell (7 m × 5 m, full height) but
+# heavily stripped down:
+#
+#   - No island
+#   - No stovetop, no hood, no fridge
+#   - Oven + microwave kept as a wall stack on the left (anchored by a
+#     drawer base); their upper hinge cabinet is removed
+#   - Two upper hinge cabinets on the top-left, two on the top-right
+#   - Counter-only gap (~1.2 m wide) between the two upper-cabinet clusters
+#     — nothing above the counter in that span
+#   - No bottom-row cabinets / no counter accessories / no clutter
+
+# walls, floor
+room:
+  walls:
+    - name: wall
+      type: wall
+
+      size: [3.5, 1.5, 0.02]
+      pos: [3.5, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+
+      backing: true
+      backing_extended: [true, true]
+      size: [3.5, 1.5, 0.1]
+      pos: [3.5, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [0, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [0, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [7, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [7, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+
+      wall_side: front
+      enclosing_wall: true
+      size: [3.5, 1.5, 0.02]
+      pos: [3.5, -5, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [3.5, 1.5, 0.1]
+      pos: [3.5, -5, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+
+      size: [3.5, 2.5, 0.02]
+      pos: [3.5, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+
+      backing: true
+      size: [3.5, 2.5, 0.1]
+      pos: [3.5, -2.5, 0]
+
+  wall_accessories:
+    - name: outlet
+      type: wall_accessory
+
+      attach_to: wall
+      pos: [4.8, null, 1.2]
+
+    - name: light_switch
+      type: wall_accessory
+      config_name: light_switch
+
+      attach_to: wall
+      pos: [4.5, null, 1.2]
+
+# fixtures on the main wall
+main_group:
+  bottom_row:
+    # Single counter spanning from the right edge of the oven/micro stack
+    # (X = 2.25) all the way to the right wall (X = 7.0). Width 4.75 m,
+    # centred at X = 4.625.
+    - name: counter_main
+      type: counter
+
+      size: [4.75, 0.65, 0.92]
+      pos: [4.625, -0.325, 0.46]
+
+  wall_stack:
+    # Drawer base under the oven (so the oven sits at a sensible height).
+    - name: bottom
+      type: stack
+      levels: ["drawer", "drawer"]
+      percentages: [0.5, 0.5]
+      size: [0.8, 0.78, 0.50]
+      pos: [1.85, -0.39, 0.30]
+
+    - name: oven
+      type: oven
+      size: [0.75, 0.60, 0.68]
+
+    - name: oven_housing
+      type: housing_cabinet
+      size: [0.8, 0.78, 0.70]
+      padding: [null, [-0.01, null], null]
+      align_to: bottom
+      alignment: front
+      side: top
+      interior_obj: oven
+
+    - name: microwave
+      type: microwave
+      size: [0.75, 0.50, null]
+
+    - name: micro_housing
+      type: housing_cabinet
+      size: [0.8, 0.78, 0.55]
+      padding: [null, [-0.01, null], null]
+      align_to: oven_housing
+      alignment: front
+      side: top
+      interior_obj: microwave
+
+  # Two upper cabinets only — one on the left, one on the right, with a
+  # large counter-only gap in the middle. The two are the targets of
+  # the MessymemTwoCabinets task (cab_1 = pantry, cab_2 = fruits incl.
+  # banana). Centers are 3.6 m apart, well above the perception
+  # cluster/match thresholds so they always get distinct SG entries.
+  #
+  # Layout sketch (X axis, top-down):
+  #
+  #   0 ──── 1.45 ──── 2.25 ── 2.45 ─ 3.25 ───────── COUNTER ONLY ───────── 6.05 ─ 6.85 ── 7.0
+  #     oven/micro    │ cab_1 │           (no cabinets above)            │ cab_2 │
+  #
+  # Each upper cabinet is 0.8 m wide × 0.40 m deep × 0.92 m tall, mounted
+  # at Z = 1.85 m (so the bottom face is at ~1.39 m above the floor —
+  # leaving ~0.47 m of clear space above the 0.92 m counter top).
+  top_row:
+    # cab_1 — leftmost upper cabinet, just right of the oven/micro stack.
+    # MessymemTwoCabinets uses this name as one of its two targets (the
+    # robot spawns facing it).
+    - name: cab_1
+      type: hinge_cabinet
+      default_config_name: cab_top
+
+      size: [0.8, 0.40, 0.92]
+      pos: [2.85, -0.2, 1.85]
+
+    # cab_2 — second upper cabinet, the second task target.
+    # Pulled left from X=6.45 to X=5.65 so it lands within typical
+    # camera FOV from the cab_1-facing spawn pose; otherwise the
+    # initial in-place sweep caught it on only one yaw, single-frame.
+    - name: cab_2
+      type: hinge_cabinet
+      default_config_name: cab_top
+
+      size: [0.8, 0.40, 0.92]
+      pos: [5.65, -0.2, 1.85]
+
+# No island_group, no bottom_row_cabinets, no counter_accessories.

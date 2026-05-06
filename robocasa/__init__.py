@@ -991,6 +991,9 @@ from robocasa.environments.kitchen.messymem.messymem_two_cabinets_clutter import
 from robocasa.environments.kitchen.messymem.messymem_two_cabinets_clutter_spatial import (
     MessymemTwoCabinetsClutterSpatial,
 )
+from robocasa.environments.kitchen.messymem.messymem_many_cabinets import (
+    MessymemManyCabinets,
+)
 from robocasa.environments.kitchen.messymem.inspect_cabinet import (
     InspectCabinet,
 )

@@ -76,6 +76,7 @@ class LayoutType(IntEnum):
     # MessyMem custom layouts
     LAYOUT_MESSYMEM_001 = 61
     LAYOUT_MESSYMEM_002 = 62
+    LAYOUT_MESSYMEM_SIMPLE = 63
 
     # negative values correspond to groups (see LAYOUT_GROUPS_TO_IDS)
     TEST = -1
@@ -94,7 +95,7 @@ LAYOUT_GROUPS_TO_IDS = {
     -4: [1, 3, 5, 6, 8],         # no island
     -5: [2, 4, 7, 9, 10],        # island
     -6: [2, 4, 7, 8, 9, 10],     # dining
-    -7: [61, 62],                 # messymem custom layouts
+    -7: [61, 62, 63],             # messymem custom layouts
 }
 
 

@@ -693,11 +693,11 @@ class Fixture(MujocoXMLObjectRobocasa):
             max (float): maximum percentage of how open the door is
             env (MujocoEnv): environment
         """
-        print("Setting joint state")
+        # print("Setting joint state")
         assert 0 <= min <= 1 and 0 <= max <= 1 and min <= max
-        print("Joint names", joint_names)
+        # print("Joint names", joint_names)
         for j_name in joint_names:
-            print("At", j_name)
+            # print("At", j_name)
             info = self._joint_infos[j_name]
             joint_min, joint_max = info["range"]
             if joint_min >= 0:
@@ -710,7 +710,7 @@ class Fixture(MujocoXMLObjectRobocasa):
                 j_name,
                 env.rng.uniform(desired_min, desired_max),
             )
-            print("Set", j_name)
+            # print("Set", j_name)
 
     def is_open(self, env, joint_names=None, th=0.90):
         if joint_names is None:
@@ -738,11 +738,11 @@ class Fixture(MujocoXMLObjectRobocasa):
         """
         helper function to open the door. calls set_door_state function
         """
-        print("in open door")
+        # print("in open door")
         self.set_joint_state(
             env=env, min=min, max=max, joint_names=self.door_joint_names
         )
-        print("done open door")
+        # print("done open door")
 
     def close_door(self, env, min=0.0, max=0.0):
         """
