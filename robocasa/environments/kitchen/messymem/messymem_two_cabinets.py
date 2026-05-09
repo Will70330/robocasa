@@ -204,12 +204,15 @@ class MessymemTwoCabinets(Kitchen):
             ))
         cfgs.append(dict(
             name="banana",
-            obj_groups="banana",
+            obj_groups=os.path.join(
+                robocasa.models.assets_root,
+                "objects/objaverse/banana/banana_8/model.xml",
+            ),
             graspable=True,
             placement=dict(
                 fixture=self.cab2,
                 size=(0.5, 0.20),
-                pos=(0, 1.0),
+                pos=(0.4, 1.0),
             ),
         ))
 
