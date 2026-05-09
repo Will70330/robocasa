@@ -5,7 +5,7 @@ Scene: layout_messymem_001 (normal-size kitchen, layout ID 61).
 
 Cabinet contents (both start CLOSED at reset):
   cab_1 — pantry items : ketchup, cereal, spaghetti_box, canned_food, mayonnaise
-  cab_2 — fruits       : apple, avocado, lime, lemon, banana, pear
+  cab_2 — fruits       : apple, lime, lemon, banana, pear
 
 Counter objects:
   Below cab_1 : orange, baguette
@@ -44,7 +44,7 @@ class MessymemTwoCabinets(Kitchen):
 
     # Objects in each cabinet — used for random target selection.
     _CAB1_OBJECTS = ["ketchup", "cereal", "spaghetti_box", "canned_food", "mayonnaise"]
-    _CAB2_OBJECTS = ["apple", "avocado", "lime", "lemon", "banana", "pear"]
+    _CAB2_OBJECTS = ["apple", "lime", "lemon", "banana", "pear"]
 
     def _setup_kitchen_references(self):
         super()._setup_kitchen_references()
@@ -181,15 +181,17 @@ class MessymemTwoCabinets(Kitchen):
             ))
 
         # ── Inside cab_2: fruits — banana is the high-level goal object ───────
-        cab2_items = [
+        # Avocado removed from this scene. Other fruits (apple, lime, lemon,
+        # pear) still get random placement; banana is pinned to a tight
+        # front-centre region of the shelf so the wrist sweep reliably picks
+        # it up without occlusion from the other items.
+        cab2_other_items = [
             ("apple",   "apple",   True),
-            ("avocado", "avocado", True),
             ("lime",    "lime",    True),
             ("lemon",   "lemon",   True),
-            ("banana",  "banana",  True),
             ("pear",    "pear",    True),
         ]
-        for name, group, graspable in cab2_items:
+        for name, group, graspable in cab2_other_items:
             cfgs.append(dict(
                 name=name,
                 obj_groups=group,
@@ -200,6 +202,16 @@ class MessymemTwoCabinets(Kitchen):
                     pos=(None, None),
                 ),
             ))
+        cfgs.append(dict(
+            name="banana",
+            obj_groups="banana",
+            graspable=True,
+            placement=dict(
+                fixture=self.cab2,
+                size=(0.5, 0.20),
+                pos=(0, 1.0),
+            ),
+        ))
 
         return cfgs
 

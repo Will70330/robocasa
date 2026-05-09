@@ -119,39 +119,16 @@ main_group:
       pos: [4.625, -0.325, 0.46]
 
   wall_stack:
-    # Drawer base under the oven (so the oven sits at a sensible height).
+    # Just a two-tier drawer base on this wall — the oven, microwave, and
+    # their housings were removed from this layout. No upper cabinets sit
+    # above the drawer here; the two upper cabinets (cab_1, cab_2) live
+    # in top_row below and are positioned independently.
     - name: bottom
       type: stack
       levels: ["drawer", "drawer"]
       percentages: [0.5, 0.5]
       size: [0.8, 0.78, 0.50]
       pos: [1.85, -0.39, 0.30]
-
-    - name: oven
-      type: oven
-      size: [0.75, 0.60, 0.68]
-
-    - name: oven_housing
-      type: housing_cabinet
-      size: [0.8, 0.78, 0.70]
-      padding: [null, [-0.01, null], null]
-      align_to: bottom
-      alignment: front
-      side: top
-      interior_obj: oven
-
-    - name: microwave
-      type: microwave
-      size: [0.75, 0.50, null]
-
-    - name: micro_housing
-      type: housing_cabinet
-      size: [0.8, 0.78, 0.55]
-      padding: [null, [-0.01, null], null]
-      align_to: oven_housing
-      alignment: front
-      side: top
-      interior_obj: microwave
 
   # Two upper cabinets only — one on the left, one on the right, with a
   # large counter-only gap in the middle. The two are the targets of
@@ -162,7 +139,7 @@ main_group:
   # Layout sketch (X axis, top-down):
   #
   #   0 ──── 1.45 ──── 2.25 ── 2.45 ─ 3.25 ───────── COUNTER ONLY ───────── 6.05 ─ 6.85 ── 7.0
-  #     oven/micro    │ cab_1 │           (no cabinets above)            │ cab_2 │
+  #     drawer base   │ cab_1 │           (no cabinets above)            │ cab_2 │
   #
   # Each upper cabinet is 0.8 m wide × 0.40 m deep × 0.92 m tall, mounted
   # at Z = 1.85 m (so the bottom face is at ~1.39 m above the floor —

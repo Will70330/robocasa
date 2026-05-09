@@ -168,40 +168,18 @@ main_group:
       size: [0.8, 0.78, 0.50]
       pos: [1.85, -0.39, 0.30]   # X: 0.85+1=1.85
 
-    - name: oven
-      type: oven
-      size: [0.75, 0.60, 0.68]
-
-    - name: oven_housing
-      type: housing_cabinet
-      size: [0.8, 0.78, 0.70]
-      padding: [null, [-0.01, null], null]
-      align_to: bottom
-      alignment: front
-      side: top
-      interior_obj: oven
-
-    - name: microwave
-      type: microwave
-      size: [0.75, 0.50, null]
-
-    - name: micro_housing
-      type: housing_cabinet
-      size: [0.8, 0.78, 0.55]
-      padding: [null, [-0.01, null], null]
-      align_to: oven_housing
-      alignment: front
-      side: top
-      interior_obj: microwave
-
+    # No mid-wall cabinets here — the oven, microwave and their housings
+    # were removed from this layout. `top` anchors directly onto `bottom`
+    # so this wall has just the lower drawer base and a single upper
+    # cabinet sitting on top of it.
     - name: top
       type: hinge_cabinet
       size: [0.8, 0.78, null]
-      align_to: micro_housing
+      align_to: bottom
       alignment: front
       side: top
       stack_height: 2.55
-      stack_fixtures: ["bottom", "oven_housing", "micro_housing"]
+      stack_fixtures: ["bottom"]
 
     - name: fridge
       type: fridge_side_by_side
