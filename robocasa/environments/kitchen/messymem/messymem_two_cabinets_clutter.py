@@ -107,7 +107,7 @@ class MessymemTwoCabinetsClutterChoice(Kitchen):
     def _get_obj_cfgs(self):
         cfgs = []
 
-        # ── Counter below cab_1: orange, baguette ─────────────────────────────
+        # ── Counter below cab_1: orange, onion ────────────────────────────────
         cfgs.append(dict(
             name="orange",
             obj_groups="orange",
@@ -120,8 +120,8 @@ class MessymemTwoCabinetsClutterChoice(Kitchen):
             ),
         ))
         cfgs.append(dict(
-            name="baguette",
-            obj_groups="baguette",
+            name="cab1_counter_onion",
+            obj_groups="onion",
             graspable=True,
             placement=dict(
                 fixture=self.counter,

@@ -41,7 +41,7 @@ two-cabinet baseline (and the analyzer captures multiple frames per
 open, so the keyframe pool grows ~2.5×).
 
 Counter objects (kept identical to MessymemTwoCabinets so the surrounding
-scene matches the rest of the messymem benchmark): orange, baguette below
+scene matches the rest of the messymem benchmark): orange, onion below
 cab_1; onion, bagged_food, pineapple below cab_2.
 
 High-level goal: "Find the apple."
@@ -161,7 +161,7 @@ class MessymemManyCabinets(Kitchen):
     def _get_obj_cfgs(self):
         cfgs = []
 
-        # ── Counter below cab_1: orange, baguette ─────────────────────────────
+        # ── Counter below cab_1: orange, onion ────────────────────────────────
         # (kept identical to MessymemTwoCabinets so the visual context
         # surrounding cab_1 is unchanged from the rest of the benchmark)
         cfgs.append(dict(
@@ -176,8 +176,8 @@ class MessymemManyCabinets(Kitchen):
             ),
         ))
         cfgs.append(dict(
-            name="baguette",
-            obj_groups="baguette",
+            name="cab1_counter_onion",
+            obj_groups="onion",
             graspable=True,
             placement=dict(
                 fixture=self.counter,

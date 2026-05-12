@@ -8,7 +8,7 @@ Cabinet contents (both start CLOSED at reset):
   cab_2 — fruits       : apple, lime, lemon, banana, pear
 
 Counter objects:
-  Below cab_1 : orange, baguette
+  Below cab_1 : orange, onion
   Below cab_2 : onion, bagged_food, pineapple
 
 High-level goal: "Open the upper cabinets and find the banana."
@@ -101,7 +101,10 @@ class MessymemTwoCabinets(Kitchen):
     def _get_obj_cfgs(self):
         cfgs = []
 
-        # ── Counter below cab_1: orange, baguette ─────────────────────────────
+        # ── Counter below cab_1: orange, onion ────────────────────────────────
+        # (onion chosen over baguette because SAM3 reliably mislabels a
+        # baguette as a "banana" from wrist-camera angles, polluting the
+        # SG with a ghost banana_* node that breaks find-the-banana trials.)
         cfgs.append(dict(
             name="orange",
             obj_groups="orange",
@@ -114,8 +117,8 @@ class MessymemTwoCabinets(Kitchen):
             ),
         ))
         cfgs.append(dict(
-            name="baguette",
-            obj_groups="baguette",
+            name="cab1_counter_onion",
+            obj_groups="onion",
             graspable=True,
             placement=dict(
                 fixture=self.counter,
