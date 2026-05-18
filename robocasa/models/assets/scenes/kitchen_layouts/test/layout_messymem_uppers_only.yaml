@@ -1,0 +1,202 @@
+# layout_messymem_uppers_only.yaml
+#
+# Stripped-to-essentials variant of layout_messymem_no_island.yaml (which is
+# itself layout002 minus the island). Removes EVERYTHING under counter
+# height — no drawers, no fridge, no stovetop, no oven, no microwave, no
+# bottom-row hinge cabinets, no inter-cabinet shelves, no hood. The only
+# fixtures kept are:
+#   - walls, floor, light switches, outlets, utensil rack, stools
+#     (visual context; doesn't affect the OpenCabinet policy)
+#   - one full-wall counter (so the cabinets aren't floating)
+#   - cab_1 (upper hinge, far left)   at x=1.75
+#   - cab_2 (upper hinge, far right)  at x=4.55
+#
+# Why: isolates the OpenCabinet policy from any visual distractions the
+# trained policy might be sensitive to. With this layout, the wrist-cam
+# view at the policy's in-distribution spawn pose is just "white wall +
+# upper cabinet + counter below", which matches what the marlowe
+# training data's eye-in-hand frames look like most reliably.
+#
+# cab_2's position is now explicit (4.55) instead of align_to chained
+# through shelves — same world position as layout 65, just no longer
+# depends on the removed shelves fixture.
+
+# walls, floor (verbatim from layout_messymem_no_island.yaml)
+room:
+  walls:
+    - name: wall
+      type: wall
+      size: [3.15, 1.5, 0.02]
+      pos: [2.15, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+      backing: true
+      backing_extended: [true, true]
+      size: [3.15, 1.5, 0.1]
+      pos: [2.15, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [-1, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [-1, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [5.3, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [5.3, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      size: [3.15, 1.5, 0.02]
+      pos: [2.15, -5.0, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [3.15, 1.5, 0.1]
+      pos: [2.15, -5.0, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+      size: [3.15, 2.5, 0.02]
+      pos: [2.15, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+      backing: true
+      size: [3.15, 2.5, 0.1]
+      pos: [2.15, -2.5, 0]
+
+  wall_accessories:
+    - name: outlet
+      type: wall_accessory
+      attach_to: wall
+      pos: [3.8, null, 1.2]
+
+    - name: outlet_2
+      type: wall_accessory
+      attach_to: wall
+      pos: [2, null, 1.2]
+
+    - name: light_switch
+      type: wall_accessory
+      config_name: light_switch
+      attach_to: wall
+      pos: [3.5, null, 1.2]
+
+    - name: light_switch_2
+      type: wall_accessory
+      config_name: light_switch
+      attach_to: wall
+      pos: [3.6, null, 1.2]
+
+    - name: utensil_rack
+      type: utensil_rack
+      attach_to: wall
+      pos: [2.75, null, 1.3]
+
+  floor_accessories:
+    - name: stool_1
+      type: stool
+      attach_to: floor
+      z_rot: 3.1415
+      pos: [2.1, -3.25, null]
+
+    - name: stool_2
+      type: stool
+      attach_to: floor
+      z_rot: 3.1415
+      pos: [2.75, -3.25, null]
+
+    - name: stool_3
+      type: stool
+      attach_to: floor
+      z_rot: 3.1415
+      pos: [3.4, -3.25, null]
+
+main_group:
+  bottom_row:
+    # Full-wall counter so both cabinets sit above continuous countertop.
+    # No interior_obj (the original layout 2 had a stovetop embedded;
+    # removed here so we have no appliances at all).
+    - name: counter_main
+      type: counter
+      size: [5.0, 0.65, 0.92]
+      pos: [3.0, -0.325, 0.46]
+
+  # Pure drawer stacks underneath the counter — no hinge cabinets among
+  # them so SAM3 only ever labels `cab_1` and `cab_2` as "cabinet" in the
+  # scene graph. Visual filler only; doesn't affect the planner's target
+  # selection.
+  wall_stack:
+    - name: drawer_left
+      type: stack
+      levels: ["drawer", "drawer"]
+      percentages: [0.5, 0.5]
+      size: [0.8, 0.65, 0.50]
+      pos: [0.5, -0.325, 0.30]
+
+    - name: drawer_mid
+      type: stack
+      levels: ["drawer", "drawer"]
+      percentages: [0.5, 0.5]
+      size: [0.8, 0.65, 0.50]
+      pos: [3.15, -0.325, 0.30]
+
+    - name: drawer_right_lower
+      type: stack
+      levels: ["drawer", "drawer", "drawer", "drawer"]
+      percentages: [0.25, 0.25, 0.25, 0.25]
+      size: [0.8, 0.65, 0.84]
+      pos: [4.55, -0.325, 0.47]
+
+  top_row:
+    # cab_1 — far-left upper hinge cabinet, same position as layout 65.
+    - name: cab_1
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [1.0, 0.40, 0.92]
+      pos: [1.75, -0.2, 1.85]
+
+    # Shelves between the two cabinets — open_cabinet type, not a hinge
+    # cabinet, so it provides visual depth without competing with cab_1 /
+    # cab_2 as a SAM3 "cabinet" target.
+    - name: shelves
+      type: open_cabinet
+      default_config_name: shelves
+      size: [0.8, 0.40, 0.92]
+      pos: [3.15, -0.2, 1.85]
+
+    # cab_2 — far-right upper hinge cabinet. Position derived from layout
+    # 65's align_to chain (cab_1.right + 1.0 offset + shelves.width=0.8 +
+    # cab_2.width/2 = 4.55). Explicit instead of align_to so the layout
+    # doesn't break if the inter-cabinet spacing or shelves config
+    # changes.
+    - name: cab_2
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [1.0, 0.40, 0.92]
+      pos: [4.55, -0.2, 1.85]

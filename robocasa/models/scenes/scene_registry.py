@@ -77,6 +77,9 @@ class LayoutType(IntEnum):
     LAYOUT_MESSYMEM_001 = 61
     LAYOUT_MESSYMEM_002 = 62
     LAYOUT_MESSYMEM_SIMPLE = 63
+    LAYOUT_MESSYMEM_DRAWERS = 64
+    LAYOUT_MESSYMEM_NO_ISLAND = 65
+    LAYOUT_MESSYMEM_UPPERS_ONLY = 66
 
     # negative values correspond to groups (see LAYOUT_GROUPS_TO_IDS)
     TEST = -1

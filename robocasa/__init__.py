@@ -985,6 +985,12 @@ from robocasa.environments.kitchen.atomic.kitchen_toaster import (
 from robocasa.environments.kitchen.messymem.messymem_two_cabinets import (
     MessymemTwoCabinets,
 )
+from robocasa.environments.kitchen.messymem.messymem_two_drawers import (
+    MessymemTwoDrawers,
+)
+from robocasa.environments.kitchen.messymem.messymem_locked_left_cabinet import (
+    MessymemLockedLeftCabinet,
+)
 from robocasa.environments.kitchen.messymem.messymem_two_cabinets_clutter import (
     MessymemTwoCabinetsClutterChoice,
 )

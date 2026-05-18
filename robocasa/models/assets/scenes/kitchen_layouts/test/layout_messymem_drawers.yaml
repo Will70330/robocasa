@@ -1,0 +1,150 @@
+# layout_messymem_drawers.yaml
+#
+# Minimal kitchen for testing the OpenDrawer primitive end-to-end. Mirrors
+# layout_messymem_simple's shell (the messymem_001 room) but replaces the
+# two upper hinge cabinets with two ground-level drawer stacks placed
+# ~3.6 m apart along the main wall — so the planner has the same
+# "two distinct targets, far apart" story as the simple-cabinets scene.
+#
+#   - No island, no fridge, no stovetop, no upper cabinets
+#   - Counter spans the main wall
+#   - Two drawer stacks: drawer_1 (left) and drawer_2 (right). Each is a
+#     2-level stack; the top drawer of each is the OpenDrawer target.
+#     Stack-internal fixtures are named <stack_name>_<idx> by FixtureStack,
+#     so `drawer_1_0` (top) and `drawer_1_1` (bottom) are addressable.
+#
+# Layout sketch (X axis, top-down):
+#
+#   0 ──── 2.45 ── 3.25 ───────── COUNTER ONLY ───────── 5.25 ── 6.05 ── 7.0
+#               │ drawer_1 │                              │ drawer_2 │
+
+# walls, floor
+room:
+  walls:
+    - name: wall
+      type: wall
+
+      size: [3.5, 1.5, 0.02]
+      pos: [3.5, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+
+      backing: true
+      backing_extended: [true, true]
+      size: [3.5, 1.5, 0.1]
+      pos: [3.5, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [0, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [0, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [7, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [7, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+
+      wall_side: front
+      enclosing_wall: true
+      size: [3.5, 1.5, 0.02]
+      pos: [3.5, -5, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [3.5, 1.5, 0.1]
+      pos: [3.5, -5, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+
+      size: [3.5, 2.5, 0.02]
+      pos: [3.5, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+
+      backing: true
+      size: [3.5, 2.5, 0.1]
+      pos: [3.5, -2.5, 0]
+
+  wall_accessories:
+    - name: outlet
+      type: wall_accessory
+
+      attach_to: wall
+      pos: [4.8, null, 1.2]
+
+    - name: light_switch
+      type: wall_accessory
+      config_name: light_switch
+
+      attach_to: wall
+      pos: [4.5, null, 1.2]
+
+# fixtures on the main wall
+main_group:
+  bottom_row:
+    # Counter spanning the full main wall (0 → 7 m). The two drawer stacks
+    # below punch into this counter via interior_obj-style stacking — but
+    # since drawer stacks ARE the counter-height frame here, we just leave
+    # the counter to span everything and place drawer stacks against it.
+    - name: counter_main
+      type: counter
+
+      size: [7.0, 0.65, 0.92]
+      pos: [3.5, -0.325, 0.46]
+
+  # Two drawer stacks ~3.6 m apart, sitting against the main wall. Each
+  # stack creates 2 individual drawer fixtures internally:
+  #   drawer_1_0 (top), drawer_1_1 (bottom)
+  #   drawer_2_0 (top), drawer_2_1 (bottom)
+  # The MessymemTwoDrawers task targets the *top* drawers (drawer_1_0,
+  # drawer_2_0); substring-matching on "drawer_1" / "drawer_2" alone is
+  # ambiguous since both 'drawer_1_0' and 'drawer_1_1' contain "drawer_1",
+  # so the task passes full_name_check=True (see messymem_two_drawers.py).
+  drawer_stacks:
+    - name: drawer_1
+      type: stack
+      levels: ["drawer", "drawer"]
+      percentages: [0.5, 0.5]
+      size: [0.8, 0.65, 0.78]
+      pos: [2.85, -0.325, 0.39]
+
+    - name: drawer_2
+      type: stack
+      levels: ["drawer", "drawer"]
+      percentages: [0.5, 0.5]
+      size: [0.8, 0.65, 0.78]
+      pos: [5.65, -0.325, 0.39]
+
+# No island_group, no top_row (no upper cabinets), no clutter.
