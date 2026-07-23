@@ -1,0 +1,173 @@
+# layout_messymem_kitchen_row.yaml
+#
+# Single-counter kitchen with a continuous under-counter run of fixtures,
+# left-to-right along the main wall:
+#
+#     [ 4-drawer stack ][ 4-drawer stack ][ dishwasher ][ large cabinet ]
+#       drawer_1           drawer_2         dishwasher_1   big_cabinet
+#
+# Mirrors the minimal room shell of layout_messymem_drawers (the
+# messymem_001 room: no island, no fridge, no stovetop, no upper
+# cabinets) so the scene stays uncluttered and robot-accessible.
+#
+# Fixture naming (for tasks / fixture refs):
+#   - drawer_1 is a 4-level drawer stack -> drawer_1_0 (top) .. drawer_1_3
+#     (bottom). drawer_2 likewise -> drawer_2_0 .. drawer_2_3. Substring
+#     matching on "drawer_1" is ambiguous across its four sub-drawers, so
+#     tasks targeting a specific drawer should use full_name_check=True.
+#   - dishwasher_1 is a single dishwasher fixture.
+#   - big_cabinet is a single-level hinge (double-door) cabinet stack ->
+#     big_cabinet_0.
+#
+# Layout sketch (X axis, top-down; all four sit against the main wall
+# under one continuous counter):
+#
+#   0 ─ 1.1 ── drawer_1 ── drawer_2 ── dishwasher ── big_cabinet ── 4.5 ──── 7.0
+#              (0.8)        (0.8)        (0.6)         (0.9)
+
+# walls, floor  (identical shell to layout_messymem_drawers)
+room:
+  walls:
+    - name: wall
+      type: wall
+
+      size: [3.5, 1.5, 0.02]
+      pos: [3.5, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+
+      backing: true
+      backing_extended: [true, true]
+      size: [3.5, 1.5, 0.1]
+      pos: [3.5, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [0, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [0, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [7, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [7, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+
+      wall_side: front
+      enclosing_wall: true
+      size: [3.5, 1.5, 0.02]
+      pos: [3.5, -5, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [3.5, 1.5, 0.1]
+      pos: [3.5, -5, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+
+      size: [3.5, 2.5, 0.02]
+      pos: [3.5, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+
+      backing: true
+      size: [3.5, 2.5, 0.1]
+      pos: [3.5, -2.5, 0]
+
+  wall_accessories:
+    - name: outlet
+      type: wall_accessory
+
+      attach_to: wall
+      pos: [4.8, null, 1.2]
+
+    - name: light_switch
+      type: wall_accessory
+      config_name: light_switch
+
+      attach_to: wall
+      pos: [4.5, null, 1.2]
+
+# fixtures on the main wall
+main_group:
+  bottom_row:
+    # Single counter spanning the full main wall (0 -> 7 m). The
+    # under-counter run below sits flush against it.
+    - name: counter_main
+      type: counter
+
+      size: [7.0, 0.65, 0.92]
+      pos: [3.5, -0.325, 0.46]
+
+  # Under-counter run, chained left-to-right with align_to/side:right so
+  # the four fixtures sit edge-to-edge against the main wall. Tops are
+  # aligned (alignment: top_back) so the run presents a flush line just
+  # under the countertop.
+  bottom_row_cabinets:
+    # 1) first set of 4 drawers stacked vertically
+    - name: drawer_1
+      type: stack
+      levels: ["drawer", "drawer", "drawer", "drawer"]
+      percentages: [0.25, 0.25, 0.25, 0.25]
+      size: [0.8, 0.6, 0.84]
+      pos: [1.5, -0.3, 0.47]
+
+    # 2) second set of 4 drawers stacked vertically, right of the first
+    - name: drawer_2
+      type: stack
+      levels: ["drawer", "drawer", "drawer", "drawer"]
+      percentages: [0.25, 0.25, 0.25, 0.25]
+      size: [0.8, 0.6, 0.84]
+      align_to: drawer_1
+      side: right
+      alignment: top_back
+
+    # 3) dishwasher, right of the second drawer stack
+    - name: dishwasher_1
+      type: dishwasher
+      size: [0.6, 0.6, 0.89]
+      align_to: drawer_2
+      side: right
+      alignment: top_back
+
+    # 4) large (double-door) cabinet, right of the dishwasher
+    - name: big_cabinet
+      type: stack
+      levels: ["hinge_cabinet"]
+      percentages: [1.0]
+      size: [0.9, 0.6, 0.84]
+      align_to: dishwasher_1
+      side: right
+      alignment: top_back
+
+# No island_group, no top_row (no upper cabinets), no clutter.

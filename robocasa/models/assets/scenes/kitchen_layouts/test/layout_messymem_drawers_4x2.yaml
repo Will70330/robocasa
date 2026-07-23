@@ -1,0 +1,147 @@
+# layout_messymem_drawers_4x2.yaml
+#
+# A single bank of 8 drawers arranged 4 rows x 2 columns (two vertical
+# 4-drawer stacks side-by-side), mirroring the real-world drawer rig. Used
+# to develop the hardcoded pull-drawer + peek primitives with SG-overlay
+# Gemini pointing. See README_drawer_manipulation.md.
+#
+#   - No island, fridge, stovetop, or upper cabinets — just the drawer bank
+#     under a counter, so the scene is uncluttered for pointing/overlay work.
+#   - Two 4-level drawer stacks: drawer_col_1 (left), drawer_col_2 (right).
+#     After --gt_fixtures seeding the SG holds drawer_0..drawer_7. Within a
+#     column the four drawers share an x, so pointing/peek disambiguation
+#     must select by (x, z), not x alone.
+#
+# Placeholder dimensions (correct to the real rig): 0.45 m column width,
+# 4 x ~0.20 m drawers (0.84 m bank height incl. base), 0.6 m depth.
+#
+# Layout sketch (front view of the bank):
+#
+#     +----------+----------+
+#     | drawer   | drawer   |   row 0 (top)
+#     +----------+----------+
+#     | drawer   | drawer   |   row 1
+#     +----------+----------+
+#     | drawer   | drawer   |   row 2
+#     +----------+----------+
+#     | drawer   | drawer   |   row 3 (bottom)
+#     +----------+----------+
+#       col_1      col_2
+
+# walls, floor  (identical minimal shell to layout_messymem_drawers)
+room:
+  walls:
+    - name: wall
+      type: wall
+      size: [3.5, 1.5, 0.02]
+      pos: [3.5, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+      backing: true
+      backing_extended: [true, true]
+      size: [3.5, 1.5, 0.1]
+      pos: [3.5, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [0, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [0, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [7, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [7, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      size: [3.5, 1.5, 0.02]
+      pos: [3.5, -5, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [3.5, 1.5, 0.1]
+      pos: [3.5, -5, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+      size: [3.5, 2.5, 0.02]
+      pos: [3.5, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+      backing: true
+      size: [3.5, 2.5, 0.1]
+      pos: [3.5, -2.5, 0]
+
+  wall_accessories:
+    - name: outlet
+      type: wall_accessory
+      attach_to: wall
+      pos: [4.8, null, 1.2]
+
+    - name: light_switch
+      type: wall_accessory
+      config_name: light_switch
+      attach_to: wall
+      pos: [4.5, null, 1.2]
+
+# fixtures on the main wall
+main_group:
+  bottom_row:
+    # Single counter over the drawer bank (spans the main wall, matching the
+    # validated layout_messymem_kitchen_row counter).
+    - name: counter_main
+      type: counter
+      size: [7.0, 0.65, 0.92]
+      pos: [3.5, -0.325, 0.46]
+
+  # 4x2 drawer bank: two vertical 4-drawer stacks placed side-by-side and
+  # centered (~x=3.5) under the counter. drawer_col_1 is the left column,
+  # drawer_col_2 the right; each contributes 4 sub-drawer fixtures.
+  # Stacks named drawer_1 / drawer_2 so FixtureStack's child fixtures are
+  # drawer_1_0..3 (0=top) and drawer_2_0..3 — matching the fixture refs the
+  # MessymemTwoDrawers task registers (drawer_1_0 / drawer_2_0). The
+  # --gt_fixtures SG seed is independent of these names (it keys off the
+  # "drawer" label → drawer_0..7).
+  bottom_row_cabinets:
+    - name: drawer_1
+      type: stack
+      levels: ["drawer", "drawer", "drawer", "drawer"]
+      percentages: [0.25, 0.25, 0.25, 0.25]
+      size: [0.45, 0.6, 0.84]
+      pos: [3.05, -0.3, 0.47]
+
+    - name: drawer_2
+      type: stack
+      levels: ["drawer", "drawer", "drawer", "drawer"]
+      percentages: [0.25, 0.25, 0.25, 0.25]
+      size: [0.45, 0.6, 0.84]
+      align_to: drawer_1
+      side: right
+      alignment: top_back
+
+# No island_group, no top_row, no clutter.

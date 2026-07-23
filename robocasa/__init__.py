@@ -988,14 +988,27 @@ from robocasa.environments.kitchen.messymem.messymem_two_cabinets import (
 from robocasa.environments.kitchen.messymem.messymem_two_drawers import (
     MessymemTwoDrawers,
 )
+from robocasa.environments.kitchen.messymem.messymem_drawers_4x2 import (
+    MessymemDrawers4x2,
+)
+from robocasa.environments.kitchen.messymem.messymem_drawers_4x2_memory import (
+    MessymemDrawers4x2Memory,
+)
 from robocasa.environments.kitchen.messymem.messymem_locked_left_cabinet import (
     MessymemLockedLeftCabinet,
+)
+from robocasa.environments.kitchen.messymem.messymem_locked_chain import (
+    MessymemLockedChain,
 )
 from robocasa.environments.kitchen.messymem.messymem_two_cabinets_clutter import (
     MessymemTwoCabinetsClutterChoice,
 )
 from robocasa.environments.kitchen.messymem.messymem_two_cabinets_clutter_spatial import (
     MessymemTwoCabinetsClutterSpatial,
+)
+from robocasa.environments.kitchen.messymem.messymem_two_cabinets_clutter_chain import (
+    MessymemTwoCabinetsClutterChain,
+    MessymemTwoCabinetsClutterChainSwapped,
 )
 from robocasa.environments.kitchen.messymem.messymem_many_cabinets import (
     MessymemManyCabinets,
