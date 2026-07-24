@@ -44,6 +44,15 @@ class MessymemDrawers4x2Memory(MessymemDrawers4x2):
     _LEMON_DRAWER = "drawer_1_main_group_4"   # top-left  (SG id drawer_3)
     _APPLE_DRAWER = "drawer_2_main_group_4"   # top-right (SG id drawer_7)
 
+    # Pin a specific apple mesh instead of letting obj_groups="apple" sample the
+    # category. The sampler picks uniformly across ~23 objaverse apples, several
+    # of which are dark/brown (apple_18 is RGB 92/67/38, apple_21/22 similar) —
+    # the VLM read one of those as "a dark rounded object … potato", which
+    # silently breaks a find-the-apple task. apple_2 is the brightest of the
+    # strongly-red meshes (RGB 183/86/52) and reads unambiguously as an apple.
+    # sample_object() accepts an exact model.xml path in place of a group name.
+    _APPLE_MESH = "apple_2"
+
     # ── Fixture references ────────────────────────────────────────────────
     def _setup_kitchen_references(self):
         # Skip MessymemDrawers4x2's single-target refs; set up our own.
@@ -73,6 +82,27 @@ class MessymemDrawers4x2Memory(MessymemDrawers4x2):
         ep_meta["apple_drawer"] = self._APPLE_DRAWER
         return ep_meta
 
+    # ── Asset pinning ─────────────────────────────────────────────────────
+    @classmethod
+    def _apple_mjcf_path(cls):
+        """Absolute model.xml path of the pinned apple mesh.
+
+        Resolved from the object registry rather than built from
+        robocasa.__file__: robocasa can import as a NAMESPACE package (when the
+        submodule root shadows the real package), in which case __file__ is None
+        and a hand-built path would blow up. The registry also holds exactly the
+        paths sample_kitchen_object_helper() validates against, so a hit here
+        cannot desync from what the sampler will accept.
+        """
+        from robocasa.models.objects.kitchen_object_utils import OBJ_CATEGORIES
+        needle = f"/{cls._APPLE_MESH}/"
+        for path in OBJ_CATEGORIES["apple"]["objaverse"].mjcf_paths:
+            if needle in path:
+                return path
+        raise ValueError(
+            f"pinned apple mesh {cls._APPLE_MESH!r} not found in the objaverse "
+            f"apple registry — pick another mesh or fix the name")
+
     # ── Object placements: lemon (top-left) + apple (top-right), both front ─
     def _get_obj_cfgs(self):
         cfgs = []
@@ -85,7 +115,7 @@ class MessymemDrawers4x2Memory(MessymemDrawers4x2):
         ))
         cfgs.append(dict(
             name="apple",
-            obj_groups="apple",
+            obj_groups=self._apple_mjcf_path(),  # exact mesh — see _APPLE_MESH
             graspable=True,
             placement=dict(fixture=self.apple_drawer,
                            size=(0.15, 0.12), pos=(0.0, -0.4)),
