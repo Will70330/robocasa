@@ -5,7 +5,7 @@
 # height — no drawers, no fridge, no stovetop, no oven, no microwave, no
 # bottom-row hinge cabinets, no inter-cabinet shelves, no hood. The only
 # fixtures kept are:
-#   - walls, floor, light switches, outlets, utensil rack, stools
+#   - walls, floor, light switches, outlets, utensil rack
 #     (visual context; doesn't affect the OpenCabinet policy)
 #   - one full-wall counter (so the cabinets aren't floating)
 #   - cab_1 (upper hinge, far left)   at x=1.75
@@ -118,24 +118,10 @@ room:
       attach_to: wall
       pos: [2.75, null, 1.3]
 
-  floor_accessories:
-    - name: stool_1
-      type: stool
-      attach_to: floor
-      z_rot: 3.1415
-      pos: [2.1, -3.25, null]
-
-    - name: stool_2
-      type: stool
-      attach_to: floor
-      z_rot: 3.1415
-      pos: [2.75, -3.25, null]
-
-    - name: stool_3
-      type: stool
-      attach_to: floor
-      z_rot: 3.1415
-      pos: [3.4, -3.25, null]
+  # Stools removed: their floor footprint at y=-3.25 was blocking the
+  # mobile base when it tried to navigate east-west between cab_1 and
+  # cab_2 during chained tasks (e.g. memchain_lemon_ketchup). No task
+  # in this layout actually interacts with the stools.
 
 main_group:
   bottom_row:
@@ -147,31 +133,17 @@ main_group:
       size: [5.0, 0.65, 0.92]
       pos: [3.0, -0.325, 0.46]
 
-  # Pure drawer stacks underneath the counter — no hinge cabinets among
-  # them so SAM3 only ever labels `cab_1` and `cab_2` as "cabinet" in the
-  # scene graph. Visual filler only; doesn't affect the planner's target
-  # selection.
-  wall_stack:
-    - name: drawer_left
-      type: stack
-      levels: ["drawer", "drawer"]
-      percentages: [0.5, 0.5]
-      size: [0.8, 0.65, 0.50]
-      pos: [0.5, -0.325, 0.30]
-
-    - name: drawer_mid
-      type: stack
-      levels: ["drawer", "drawer"]
-      percentages: [0.5, 0.5]
-      size: [0.8, 0.65, 0.50]
-      pos: [3.15, -0.325, 0.30]
-
-    - name: drawer_right_lower
-      type: stack
-      levels: ["drawer", "drawer", "drawer", "drawer"]
-      percentages: [0.25, 0.25, 0.25, 0.25]
-      size: [0.8, 0.65, 0.84]
-      pos: [4.55, -0.325, 0.47]
+  # Drawer stacks beneath the counter were originally included as
+  # visual filler, but their 0.65m depth (y range -0.65 to 0.0) plus
+  # 0.5–0.84m height blocked the Omron base from traversing the
+  # corridor between cab_1's column and cab_2's column at the cabinet
+  # approach Y (~-0.80, where the base's north edge sits ~-0.50,
+  # inside the drawer footprint). The locked-cabinet recovery test
+  # needs the robot to drive from cab_1 to cab_2 after the cab_1
+  # attempt fails — with the drawers in place, dist plateaued at
+  # ~1.98m and the base wedged against `drawer_mid` at world x≈2.51.
+  # Removed here to restore the original "uppers only" intent stated
+  # in this file's header docstring and keep the corridor clear.
 
   top_row:
     # cab_1 — far-left upper hinge cabinet, same position as layout 65.
@@ -200,3 +172,4 @@ main_group:
       default_config_name: cab_top
       size: [1.0, 0.40, 0.92]
       pos: [4.55, -0.2, 1.85]
+      

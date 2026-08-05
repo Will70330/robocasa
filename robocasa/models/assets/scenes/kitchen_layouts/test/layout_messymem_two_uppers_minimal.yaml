@@ -1,0 +1,121 @@
+# layout_messymem_two_uppers_minimal.yaml
+#
+# Strictly-minimal variant of layout_messymem_uppers_only.yaml: drops the
+# `shelves` open_cabinet fixture between cab_1 and cab_2, plus the wall
+# accessories (outlets, light switches, utensil rack). The only fixtures
+# left are:
+#
+#   - walls, floor (mandatory for a valid scene)
+#   - counter_main (so cabinets sit above continuous countertop, and the
+#     PickFromCabinetAndPlaceOnCounter primitive has a counter to place on)
+#   - cab_1 (upper hinge, far left)   at x=1.75
+#   - cab_2 (upper hinge, far right)  at x=4.55
+#
+# Designed for the oracle_pos_no_mem baseline showcase
+# (README_baseline_gt_oracle.md). The baseline gets a cabinets-only oracle
+# dump of fixture positions; running it on layout 65 / 66 lets non-cabinet
+# fixtures (oven, shelves) into the wrist camera view and confuses the
+# planner. This layout removes them at the source.
+#
+# Cabinet positions match layout 65 / 66 exactly so MessymemTwoCabinets'
+# placement zones (items inside cabinets, items on counter "below cab_X")
+# carry over without retuning.
+
+# walls, floor (verbatim from layout_messymem_uppers_only.yaml)
+room:
+  walls:
+    - name: wall
+      type: wall
+      size: [3.15, 1.5, 0.02]
+      pos: [2.15, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+      backing: true
+      backing_extended: [true, true]
+      size: [3.15, 1.5, 0.1]
+      pos: [2.15, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [-1, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [-1, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [5.3, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [5.3, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      size: [3.15, 1.5, 0.02]
+      pos: [2.15, -5.0, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [3.15, 1.5, 0.1]
+      pos: [2.15, -5.0, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+      size: [3.15, 2.5, 0.02]
+      pos: [2.15, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+      backing: true
+      size: [3.15, 2.5, 0.1]
+      pos: [2.15, -2.5, 0]
+
+  # No wall_accessories — outlets / light switches / utensil rack are
+  # visual clutter that aren't part of the scene the showcase is testing.
+
+main_group:
+  bottom_row:
+    # Full-wall counter so both cabinets sit above continuous countertop
+    # and PickFromCabinetAndPlaceOnCounter has a place destination.
+    - name: counter_main
+      type: counter
+      size: [5.0, 0.65, 0.92]
+      pos: [3.0, -0.325, 0.46]
+
+  top_row:
+    # cab_1 — far-left upper hinge cabinet, same position as layout 65 / 66.
+    - name: cab_1
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [1.0, 0.40, 0.92]
+      pos: [1.75, -0.2, 1.85]
+
+    # cab_2 — far-right upper hinge cabinet, same position as layout 65 / 66.
+    # No `shelves` fixture between the two: that's an open_cabinet which
+    # would slip through the oracle dump's `"cabinet" in label` filter and
+    # show up as a third cabinet entry next to cab_1 / cab_2.
+    - name: cab_2
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [1.0, 0.40, 0.92]
+      pos: [4.55, -0.2, 1.85]

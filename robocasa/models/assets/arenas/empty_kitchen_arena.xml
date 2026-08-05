@@ -13,5 +13,30 @@
     <!-- <camera mode="fixed" name="agentview" pos="0.5 0 1.35" quat="0.653 0.271 0.271 0.653"/> -->
     <!-- side view -->
     <!-- <camera mode="f`ixed" name="sideview" pos="-0.05651774593317116 1.2761224129427358 1.4879572214102434" quat="0.009905065491771751 0.006877963156909582 0.5912228352893879 0.806418094001364" /> -->
+    <!-- scene_overview: 3rd-person side view for the interaction visualiser.
+         Placed at the front of the kitchen looking back toward the
+         cabinets, slightly elevated and tilted ~30 deg down so the robot
+         and the cabinet fronts are both visible.
+
+         Layout coords (messymem 3-cabinet, layout 68):
+           back wall at y=0, cabinets at y=-0.2 (cab_1 x=1.75, cab_2 x=3.15,
+           cab_3 x=4.55), counter at y=-2.5, robot navigates y≈-1..-2.5.
+
+         Pose:
+           pos  = (3.15, -4.0, 2.5)  centred on cab_2 column; 1.5 m south
+                                    of the counter; 2.5 m above the floor.
+           quat = (0.866, 0.5, 0, 0) 60 deg rotation about +X → gaze
+                                    ≈ (0, 0.866, -0.5) = forward toward
+                                    +Y and 30 deg below horizontal.
+           fovy = 70                 wide enough to swallow the cabinet
+                                    row + robot in one frame.
+
+         Tune via rerun: watch `cameras/scene_overview/rgb` and the
+         `world/cameras/scene_overview` frustum, then edit here and
+         re-launch (no env rebuild needed). -->
+    <camera mode="fixed" name="scene_overview"
+            pos="3.15 -4.0 2.5"
+            quat="0.866 0.5 0 0"
+            fovy="70"/>
   </worldbody>
 </mujoco>

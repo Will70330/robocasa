@@ -2,7 +2,7 @@ blender: Blender006
 blender_lid: BlenderLid006
 cabinet:
   default:
-  - gentex046
+  - gentex034
   - CabinetDoorPanel040
   - CabinetHandle019
 coffee_machine: CoffeeMachine090

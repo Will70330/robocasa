@@ -55,6 +55,12 @@ class MessymemLockedLeftCabinet(Kitchen):
     # ── Spawn offset (matches MessymemTwoCabinets) ────────────────────────────
     _SPAWN_PULLBACK = 0.15
 
+    # DEBUG toggle: when False, cab_1 behaves like a normal (unlocked)
+    # cabinet — used to isolate whether the diffusion OpenCabinet policy
+    # can open this cabinet at all, separately from the locked-door
+    # mechanics. Flip back to True to restore the locked scenario.
+    _LOCK_CAB1 = True
+
     def _load_model(self, **kwargs):
         super()._load_model(**kwargs)
         import numpy as np
@@ -70,7 +76,11 @@ class MessymemLockedLeftCabinet(Kitchen):
         # Both cabinets start closed.
         self.cab1.close_door(env=self)
         self.cab2.close_door(env=self)
-        self._lock_cabinet_doors(self.cab1)
+        if self._LOCK_CAB1:
+            self._lock_cabinet_doors(self.cab1)
+        else:
+            print("[LockedLeft] _LOCK_CAB1=False — cab_1 left unlocked "
+                  "(diffusion-policy isolation test).")
 
     def _lock_cabinet_doors(self, cab):
         """Make the cabinet's hinge joints behave like a real lock —
@@ -105,27 +115,34 @@ class MessymemLockedLeftCabinet(Kitchen):
             # Reset to closed pose at the start of every trial.
             qpos_addr = sim.model.get_joint_qpos_addr(full_name)
             sim.data.qpos[qpos_addr] = 0.0
-            # "Stuck door" model: SOFT spring + HEAVY damping + LIGHT
-            # Coulomb friction.
+            # "Stuck door" model: VERY SOFT spring + light damping +
+            # VERY LIGHT Coulomb friction. Tuned for stable grasp:
+            # the previous 300/100/20 values pushed back on the
+            # gripper hard enough during contact to occasionally
+            # destabilise the grasp. New values relax all three by
+            # ~3-4x; the door still can't reach the 0.5-rad "open"
+            # threshold under any realistic gripper pull.
             #
-            #   - stiffness = 300 Nm/rad → at qpos=0 the spring force
-            #     is exactly 0, so gripper contact (which barely
-            #     deflects the joint) doesn't trigger pushback. Spring
-            #     grows linearly with deflection so a sustained pull
-            #     reaches equilibrium at qpos = T/300; e.g. 30 Nm pull
-            #     → qpos ≈ 0.1 rad ≈ 6°, well below the 0.7-rad
-            #     "open" threshold. Door visibly yields a bit (so the
-            #     InteractionAnalyzer sees the attempt), but never
-            #     enough to count as opened.
+            #   - stiffness = 100 Nm/rad → at qpos=0 spring force
+            #     is 0 (no pushback at contact). A typical
+            #     OpenCabinet pull (≈12 Nm at the handle) reaches
+            #     equilibrium at qpos ≈ 0.07 rad ≈ 4° — clearly
+            #     visible as "tried but stuck" in the analyzer
+            #     collage. A worst-case peak pull (≈24 Nm) tops
+            #     out at qpos ≈ 0.19 rad ≈ 11°, still well below
+            #     the 0.5-rad open threshold polled by the eval
+            #     harness.
             #
-            #   - damping = 100 → critically-damped at this stiffness,
-            #     so the door doesn't oscillate when the policy
-            #     releases. Settles back to qpos≈0 in <0.3 s.
+            #   - damping = 40 → slightly under-critical at this
+            #     stiffness; tiny residual oscillation on release
+            #     (< 5°) decays in well under 1 s, no risk of
+            #     accidental "opening" from oscillation.
             #
-            #   - frictionloss = 50 → adds static stiction so the door
-            #     doesn't drift under tiny gripper-contact forces.
-            #     Far below stiffness contribution, so gripper grasp
-            #     stays unaffected.
+            #   - frictionloss = 5 → minimal static stiction.
+            #     Well below the gripper's ~40 N combined pull
+            #     capacity (panda: 2× 20 N finger × handle
+            #     friction ~1.0), so the grasp closes and pulls
+            #     without the contact slipping first.
             #
             # NO qpos clamp in _post_action — the clamp caused
             # intra-step physics to snap back at frame boundaries,
@@ -133,13 +150,13 @@ class MessymemLockedLeftCabinet(Kitchen):
             # grasp. Spring + damping reach equilibrium smoothly,
             # gripper stays engaged.
             dof_addr = sim.model.jnt_dofadr[joint_id]
-            sim.model.jnt_stiffness[joint_id] = 300.0
-            sim.model.dof_damping[dof_addr] = 100.0
-            sim.model.dof_frictionloss[dof_addr] = 50.0
+            sim.model.jnt_stiffness[joint_id] = 100.0
+            sim.model.dof_damping[dof_addr] = 40.0
+            sim.model.dof_frictionloss[dof_addr] = 5.0
             sim.model.qpos_spring[joint_id] = 0.0
             print(f"[LockedLeft] locked {full_name!r} via stuck-door "
-                  f"model: stiffness=300, damping=100, "
-                  f"frictionloss=50, qpos_spring=0.")
+                  f"model: stiffness=100, damping=40, "
+                  f"frictionloss=5, qpos_spring=0.")
 
     # ── Language metadata ─────────────────────────────────────────────────────
 

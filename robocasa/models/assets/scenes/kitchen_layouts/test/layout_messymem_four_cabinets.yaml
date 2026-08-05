@@ -1,0 +1,161 @@
+# layout_messymem_four_cabinets.yaml
+#
+# Minimal 4-hinge-cabinet kitchen for MessymemManyCabinets long-horizon
+# recall tests. Builds on layout_messymem_uppers_only (walls/floor/
+# accessories verbatim) but adds two lower-row hinge stacks so the
+# task has 4 cabinets with contents instead of 2.
+#
+# What it has:
+#   - cab_1 (upper hinge, x=1.75)
+#   - cab_2 (upper hinge, x=4.55)
+#   - stack_3 (lower hinge, x=1.75)
+#   - stack_4 (lower hinge, x=2.75; aligned right of stack_3)
+#   - one full-wall counter
+#   - drawer stack on the far right (visual filler under cab_2)
+#
+# What it does NOT have (to keep SAM3 detections clean):
+#   - no island, no oven/microwave/dishwasher/fridge/stovetop/hood
+#   - no HousingCabinet appliance wrappers (no SAM3 "cabinet" phantoms)
+#   - no open_cabinet shelves between cab_1/cab_2 (SAM3 sometimes
+#     labels these "cabinet" too)
+#
+# Run with --layout 67 (LAYOUT_MESSYMEM_FOUR_CABINETS).
+
+room:
+  walls:
+    - name: wall
+      type: wall
+      size: [3.15, 1.5, 0.02]
+      pos: [2.15, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+      backing: true
+      backing_extended: [true, true]
+      size: [3.15, 1.5, 0.1]
+      pos: [2.15, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [-1, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [-1, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [5.3, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [5.3, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      size: [3.15, 1.5, 0.02]
+      pos: [2.15, -5.0, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [3.15, 1.5, 0.1]
+      pos: [2.15, -5.0, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+      size: [3.15, 2.5, 0.02]
+      pos: [2.15, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+      backing: true
+      size: [3.15, 2.5, 0.1]
+      pos: [2.15, -2.5, 0]
+
+  wall_accessories:
+    - name: outlet
+      type: wall_accessory
+      attach_to: wall
+      pos: [3.8, null, 1.2]
+
+    - name: outlet_2
+      type: wall_accessory
+      attach_to: wall
+      pos: [2, null, 1.2]
+
+    - name: light_switch
+      type: wall_accessory
+      config_name: light_switch
+      attach_to: wall
+      pos: [3.5, null, 1.2]
+
+  # Stools removed: their floor footprint at y=-3.25 was blocking the
+  # mobile base when it tried to navigate between cabinets. No task in
+  # this layout interacts with them.
+
+main_group:
+  bottom_row:
+    # Full-wall counter so both upper cabinets sit above a continuous
+    # countertop. No interior_obj — no stovetop embedded.
+    - name: counter_main
+      type: counter
+      size: [5.0, 0.65, 0.92]
+      pos: [3.0, -0.325, 0.46]
+
+  # Lower-row hinge cabinets. Naming matches what MessymemManyCabinets
+  # expects via register_fixture_ref("stack_3", dict(id="stack_3_main_group_1")):
+  # the stack's first level (the hinge_cabinet) becomes <name>_main_group_1.
+  bottom_row_cabinets:
+    - name: stack_3
+      type: stack
+      levels: ["hinge_cabinet", ["drawer", "drawer"]]
+      percentages: [0.75, 0.25]
+      size: [1, 0.6, 0.84]
+      pos: [1.75, -0.3, 0.47]
+
+    - name: stack_4
+      type: stack
+      levels: ["hinge_cabinet", ["drawer", "drawer"]]
+      percentages: [0.75, 0.25]
+      size: [1, 0.6, 0.84]
+      align_to: stack_3
+      side: right
+
+    # Pure-drawer filler under cab_2 — no hinge cabinet so SAM3 won't
+    # label it "cabinet" (drawers get the "drawer" label).
+    - name: drawer_filler
+      type: stack
+      levels: ["drawer", "drawer", "drawer", "drawer"]
+      percentages: [0.25, 0.25, 0.25, 0.25]
+      size: [0.8, 0.6, 0.84]
+      pos: [4.55, -0.3, 0.47]
+
+  top_row:
+    - name: cab_1
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [1.0, 0.40, 0.92]
+      pos: [1.75, -0.2, 1.85]
+
+    - name: cab_2
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [1.0, 0.40, 0.92]
+      pos: [4.55, -0.2, 1.85]

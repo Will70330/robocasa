@@ -127,30 +127,10 @@ room:
       attach_to: wall
       pos: [2.75, null, 1.3]
 
-  floor_accessories:
-    - name: stool_1
-      type: stool
-      attach_to: floor
-      z_rot: 3.1415
+  # Stools removed: their floor footprint at y=-3.25 was blocking the
+  # mobile base when it tried to navigate between cabinets. No task in
+  # this layout interacts with them.
 
-      # place flush to ground
-      pos: [2.1, -3.25, null]
-
-    - name: stool_2
-      type: stool
-      attach_to: floor
-      z_rot: 3.1415
-
-      # place flush to ground
-      pos: [2.75, -3.25, null]
-
-    - name: stool_3
-      type: stool
-      attach_to: floor
-      z_rot: 3.1415
-
-      # place flush to ground
-      pos: [3.4, -3.25, null]
 # fixtures on the main wall
 main_group:
   # Bottom row (counters and stoves)
