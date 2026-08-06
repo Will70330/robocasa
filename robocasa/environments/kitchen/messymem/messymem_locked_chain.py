@@ -99,30 +99,12 @@ class MessymemLockedChain(MessymemLockedLeftCabinet):
         """Place banana + distractors in cab_2 (middle), ketchup in
         cab_3 (right).
 
-        Both targets are CENTRED so they straddle the door seam and stay
-        at least partly exposed whichever door the diffusion OpenCabinet
-        policy manages to pull. They used to be pinned to the LEFT half,
-        on the assumption that partial opening meant the left door — but
-        which door opens is a coin flip, and the pin only paid off on one
-        side of it. From pilot 20260806-092141:
-
-            s42  cab_2  "opened the LEFT door"   -> banana and a lime    PASS
-            s44  cab_2  "opened the LEFT door"   -> an apple and a banana PASS
-            s45  cab_2  "opened the RIGHT door"  -> a lime and an apple   FAIL
-
-        In s45 the left door stayed shut over the left-pinned banana,
-        Inspect reported "lime, apple", and the planner concluded the
-        banana was elsewhere — then continued into cab_3, opening the
-        cabinet that holds instruction 2's target and contaminating the
-        chain. One coin flip produced both the instruction-1 failure and
-        the leak.
-
-        Distractors stay constrained to the right half of cab_2 so the
-        placement sampler doesn't collide with the banana: they sample at
-        pos=(0.5) size=(0.45), roughly x in [0.28, 0.72], while a centred
-        banana at size=(0.30) occupies about [-0.15, 0.15].
-
-        +x is the right half, -x is the left half in this placer.
+        Both targets are pinned to the LEFT half of their respective
+        cabinets so they remain visible when the diffusion OpenCabinet
+        policy only manages to pull the left door open. Distractors
+        are constrained to the right half of cab_2 so the placement
+        sampler doesn't repeatedly collide with the banana. +x is
+        the right half, -x is the left half in this placer.
         """
         cfgs = []
 
@@ -140,9 +122,8 @@ class MessymemLockedChain(MessymemLockedLeftCabinet):
                 ),
             ))
 
-        # Banana in cab_2 (middle cabinet). Centred laterally so either
-        # door reveals it; mid-depth so the wrist sweep catches it
-        # without back-of-shelf occlusion.
+        # Banana in cab_2 (middle cabinet). Left half, mid-depth so
+        # the wrist sweep catches it without back-of-shelf occlusion.
         cfgs.append(dict(
             name="banana",
             obj_groups=os.path.join(
@@ -153,7 +134,7 @@ class MessymemLockedChain(MessymemLockedLeftCabinet):
             placement=dict(
                 fixture=self.cab2,
                 size=(0.30, 0.25),
-                pos=(0.0, 0.0),
+                pos=(-0.5, 0.0),
             ),
         ))
 
@@ -171,7 +152,7 @@ class MessymemLockedChain(MessymemLockedLeftCabinet):
             placement=dict(
                 fixture=self.cab3,
                 size=(0.30, 0.25),
-                pos=(0.0, 0.0),
+                pos=(-0.5, 0.0),
             ),
         ))
         return cfgs
