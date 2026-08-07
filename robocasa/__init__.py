@@ -1013,6 +1013,12 @@ from robocasa.environments.kitchen.messymem.messymem_two_cabinets_clutter_chain 
 from robocasa.environments.kitchen.messymem.messymem_many_cabinets import (
     MessymemManyCabinets,
 )
+from robocasa.environments.kitchen.messymem.messymem_n_uppers import (
+    MessymemTenCabinets,
+    MessymemFifteenCabinets,
+    MessymemTwentyCabinets,
+    MessymemLongHorizonTenCabinets,
+)
 from robocasa.environments.kitchen.messymem.inspect_cabinet import (
     InspectCabinet,
 )

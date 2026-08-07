@@ -1,0 +1,312 @@
+# layout_messymem_twenty_uppers.yaml
+#
+# 20-upper-cabinet variant of layout_messymem_three_uppers.yaml
+# (ID 68), built for long-horizon memory-chain evaluations. The
+# three-uppers scene is stretched along +x to fit the extra cabinets;
+# walls, floor and counter widen with it. Room depth, wall height,
+# cabinet size and the counter's depth/height are all UNCHANGED from
+# layout 68, so OpenCabinet / Inspect spawn poses and the perception
+# sweep's standoff distance carry over without retuning.
+#
+# GENERATED — all of layout_messymem_{ten,fifteen,twenty}_uppers.yaml
+# come from one generator so their geometry cannot drift apart. Edit
+# the generator and re-emit all three rather than patching one by hand.
+#
+# Cabinet row (20 x hinge_cabinet, cab_top config, 0.8 m wide, z = 1.85):
+#
+#   cab_001  x =   1.75      cab_011  x =  15.75
+#   cab_002  x =   3.15      cab_012  x =  17.15
+#   cab_003  x =   4.55      cab_013  x =  18.55
+#   cab_004  x =   5.95      cab_014  x =  19.95
+#   cab_005  x =   7.35      cab_015  x =  21.35
+#   cab_006  x =   8.75      cab_016  x =  22.75
+#   cab_007  x =  10.15      cab_017  x =  24.15
+#   cab_008  x =  11.55      cab_018  x =  25.55
+#   cab_009  x =  12.95      cab_019  x =  26.95
+#   cab_010  x =  14.35      cab_020  x =  28.35
+#
+# The ids are ZERO-PADDED TO THREE DIGITS, and must stay that way.
+# Kitchen.get_fixture resolves a name by SUBSTRING match (`id in
+# name`), so a variable-width id collides with any longer id it is a
+# prefix of: unpadded "cab_1" also matches "cab_10_main_group", and
+# two-digit "cab_10" would in turn match "cab_100_main_group". The
+# lookup then silently returns whichever of the two it picks, so
+# targets land in the wrong cabinet and the robot spawns at the wrong
+# end of the row. Fixed-width ids cannot be prefixes of one another;
+# three digits keeps that true up to 999 cabinets.
+#
+# Spacing is 1.4 m centre-to-centre — identical to layout 68's
+# cab_1 -> cab_2 -> cab_3 spacing. With 0.8 m wide cabinets that
+# leaves a 0.6 m air gap between neighbours. The gap is
+# deliberate and load-bearing: SAM3 has to resolve every cabinet as a
+# SEPARATE detection for the scene graph to be usable, and a
+# near-flush bank of doors risks being merged into one detection.
+# Layout 68's proven gap is 0.50 m, so this is a strictly safer
+# separation at the price of a wider room.
+#
+# Geometry note: `room.walls` / `room.floor` sizes are HALF-extents
+# (they are robosuite BoxObjects); `main_group` fixture sizes are FULL
+# extents. Both conventions appear below — don't "fix" one to match
+# the other.
+#
+#   room x-extent    :  -1.00 ..  29.10   (half-width 15.05 about x = 14.05)
+#   room y-extent    :  -5.00 ..   0.00   (unchanged from layout 68)
+#   counter x-extent :   0.50 ..  29.10   (full width 28.6 about x = 14.8)
+#   base traverse    : 26.6 m end to end
+#
+# What it does NOT have, matching layout 68: no island, no stools, no
+# appliances (oven / microwave / dishwasher / fridge / stovetop /
+# hood), no open_cabinet shelves, no HousingCabinet wrappers. Nothing
+# in the room but the cabinet row and the counter beneath it.
+#
+# Run with --layout 74.
+
+room:
+  walls:
+    - name: wall
+      type: wall
+      size: [15.05, 1.5, 0.02]
+      pos: [14.05, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+      backing: true
+      backing_extended: [true, true]
+      size: [15.05, 1.5, 0.1]
+      pos: [14.05, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [-1.0, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [-1.0, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [29.1, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [29.1, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      size: [15.05, 1.5, 0.02]
+      pos: [14.05, -5.0, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [15.05, 1.5, 0.1]
+      pos: [14.05, -5.0, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+      size: [15.05, 2.5, 0.02]
+      pos: [14.05, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+      backing: true
+      size: [15.05, 2.5, 0.1]
+      pos: [14.05, -2.5, 0]
+
+  # Same accessory types as layout 68, spread evenly along the wider
+  # backsplash instead of clustered. They sit at z = 1.2-1.3, i.e.
+  # between the counter top (z = 0.92) and the cabinet undersides
+  # (z = 1.39), so they never collide with the cabinet row.
+  wall_accessories:
+    - name: outlet
+      type: wall_accessory
+      attach_to: wall
+      pos: [4.565, null, 1.2]
+
+    - name: light_switch
+      type: wall_accessory
+      config_name: light_switch
+      attach_to: wall
+      pos: [8.63, null, 1.2]
+
+    - name: outlet_2
+      type: wall_accessory
+      attach_to: wall
+      pos: [12.695, null, 1.2]
+
+    - name: light_switch_2
+      type: wall_accessory
+      config_name: light_switch
+      attach_to: wall
+      pos: [16.76, null, 1.2]
+
+    - name: outlet_3
+      type: wall_accessory
+      attach_to: wall
+      pos: [20.825, null, 1.2]
+
+    - name: utensil_rack
+      type: utensil_rack
+      attach_to: wall
+      pos: [24.348, null, 1.3]
+
+  # Stools omitted, as in layout 68: their floor footprint blocked the
+  # mobile base when navigating east-west between cabinets. With a
+  # 26.6 m cabinet row the base traverses far more than it did
+  # on layout 68, so keeping the floor clear matters more here.
+
+main_group:
+  bottom_row:
+    # One continuous counter spanning the full cabinet row. Depth and
+    # height are unchanged from layout 68 — only the width grows.
+    # Objects are placed under a specific cabinet by the task class via
+    # sample_region_kwargs=dict(ref=<cab>) + pos=("ref", -1.0), which
+    # resolves against this single counter-top geom. Do NOT use
+    # reuse_region_from for counter objects here: it copies the whole
+    # counter-top region, so pos=(0, 0) centres the object at this
+    # counter's midpoint rather than under its cabinet.
+    - name: counter_main
+      type: counter
+      size: [28.6, 0.65, 0.92]
+      pos: [14.8, -0.325, 0.46]
+
+  top_row:
+    # 20 upper hinge cabinets, 1.4 m centre-to-centre. Width is
+    # 0.8 m throughout — matching layout 68's cab_2, the narrower of
+    # its three, chosen so a single set of OpenCabinet spawn offsets
+    # applies to every cabinet in the row.
+    - name: cab_001
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [1.75, -0.2, 1.85]
+
+    - name: cab_002
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [3.15, -0.2, 1.85]
+
+    - name: cab_003
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [4.55, -0.2, 1.85]
+
+    - name: cab_004
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [5.95, -0.2, 1.85]
+
+    - name: cab_005
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [7.35, -0.2, 1.85]
+
+    - name: cab_006
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [8.75, -0.2, 1.85]
+
+    - name: cab_007
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [10.15, -0.2, 1.85]
+
+    - name: cab_008
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [11.55, -0.2, 1.85]
+
+    - name: cab_009
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [12.95, -0.2, 1.85]
+
+    - name: cab_010
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [14.35, -0.2, 1.85]
+
+    - name: cab_011
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [15.75, -0.2, 1.85]
+
+    - name: cab_012
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [17.15, -0.2, 1.85]
+
+    - name: cab_013
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [18.55, -0.2, 1.85]
+
+    - name: cab_014
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [19.95, -0.2, 1.85]
+
+    - name: cab_015
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [21.35, -0.2, 1.85]
+
+    - name: cab_016
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [22.75, -0.2, 1.85]
+
+    - name: cab_017
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [24.15, -0.2, 1.85]
+
+    - name: cab_018
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [25.55, -0.2, 1.85]
+
+    - name: cab_019
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [26.95, -0.2, 1.85]
+
+    - name: cab_020
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [28.35, -0.2, 1.85]
