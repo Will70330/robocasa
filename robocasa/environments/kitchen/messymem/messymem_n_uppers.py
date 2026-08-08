@@ -69,6 +69,22 @@ import robocasa
 from robocasa.environments.kitchen.kitchen import *
 
 
+# Separator between a category and a variant tag in _FIXED_CONTENTS /
+# _FIXED_COUNTER / _PINNED_MODELS. `_PINNED_MODELS` maps one model to one
+# key, which is fine while a scene wants a single mug — but an
+# appearance-matching task needs THREE mugs that are unmistakably different
+# and all still called "mug". Tagging lets each placement name its own
+# model (`mug#red`, `mug#teal`, `mug#yellow`) while everything that reads
+# the scene — contents lists, object names, the graspable filter — keeps
+# seeing the bare category.
+_VARIANT_SEP = "#"
+
+
+def _base_group(spec):
+    """`mug#red` -> `mug`; an untagged category is returned unchanged."""
+    return spec.split(_VARIANT_SEP, 1)[0]
+
+
 class MessymemUpperRow(Kitchen):
     """Base class for the upper-cabinet-row scenes. Subclasses set
     ``_N_CABINETS`` and are paired with the matching layout id.
@@ -358,8 +374,12 @@ class MessymemUpperRow(Kitchen):
     # When _FIXED_CONTENTS is non-empty the RNG is bypassed entirely and the
     # scene is byte-identical on every reset and every seed. Format:
     #
-    #   _FIXED_CONTENTS = {cab_id: [(obj_group, (x, y), (w, d)), ...]}
-    #   _FIXED_COUNTER  = {cab_id: [obj_group, ...]}
+    #   _FIXED_CONTENTS = {cab_id: [(spec, (x, y), (w, d)[, shelf[, rot]]), ...]}
+    #   _FIXED_COUNTER  = {cab_id: [spec, ...]}
+    #
+    # `spec` is a category name, optionally tagged with a variant —
+    # "mug" or "mug#red". The tag selects a _PINNED_MODELS entry; the bare
+    # category is what appears in contents lists and object names.
     #
     # (x, y) are the normalised in-cabinet placement coords the robocasa
     # sampler takes (env_utils.py) — -1 is the far left / back of the
@@ -368,6 +388,11 @@ class MessymemUpperRow(Kitchen):
     # at x=±0.35 is WEDGED, an item alone at x=-0.85 is ACCESSIBLE.
     # (w, d) is that item's sampling-window size in metres; smaller windows
     # pin the item more tightly to its (x, y).
+    #
+    # `shelf` names a reset region ("level1"); `rot` pins the yaw, which
+    # only matters for items whose identity is printed on one face — a
+    # cereal box is its brand from the front and a blank nutrition panel
+    # from behind, and the default draw is ±45°.
     _FIXED_CONTENTS = {}
     _FIXED_COUNTER = {}
 
@@ -392,11 +417,17 @@ class MessymemUpperRow(Kitchen):
     # override the category draw entirely.
     _PINNED_MODELS = {}
 
-    def _obj_spec(self, group):
-        """Model path if the group is pinned, else the category name."""
-        rel = self._PINNED_MODELS.get(group)
+    def _obj_spec(self, spec):
+        """Model path if the entry is pinned, else the category name.
+
+        Looks up the full spec first so a variant tag wins, then falls back
+        to the bare category. See _base_group for the tag syntax.
+        """
+        rel = self._PINNED_MODELS.get(spec)
         if rel is None:
-            return group
+            rel = self._PINNED_MODELS.get(_base_group(spec))
+        if rel is None:
+            return _base_group(spec)
         return os.path.join(robocasa.models.assets_root, rel)
 
     # Groups that must remain pickable — `graspable=True` filters the
@@ -406,11 +437,15 @@ class MessymemUpperRow(Kitchen):
     _GRASPABLE = set()
 
     def _fixed_plan(self):
-        # entry is (group, pos, size) or (group, pos, size, shelf) — index
-        # rather than unpack so both arities work.
-        contents = {c: [e[0] for e in self._FIXED_CONTENTS.get(c, [])]
+        # entry is (group, pos, size[, shelf[, rotation]]) — index rather
+        # than unpack so every arity works. Variant tags are stripped: the
+        # contents list is a list of CATEGORIES, which is what the eval
+        # harness's ground_truth_contents is written against.
+        contents = {c: [_base_group(e[0])
+                        for e in self._FIXED_CONTENTS.get(c, [])]
                     for c in self.cab_ids}
-        counter = {c: list(self._FIXED_COUNTER.get(c, [])) for c in self.cab_ids}
+        counter = {c: [_base_group(g) for g in self._FIXED_COUNTER.get(c, [])]
+                   for c in self.cab_ids}
         return contents, counter
 
     def _get_obj_cfgs(self):
@@ -511,10 +546,19 @@ class MessymemUpperRow(Kitchen):
         for cab_id, cab in zip(self.cab_ids, self.cabs):
             for i, entry in enumerate(self._FIXED_CONTENTS.get(cab_id, [])):
                 # 3-tuple = bottom shelf (the historical form); optional 4th
-                # element names a shelf region.
-                group, pos, size = entry[:3]
+                # element names a shelf region, optional 5th pins the yaw.
+                spec, pos, size = entry[:3]
+                group = _base_group(spec)
                 shelf = entry[3] if len(entry) > 3 else None
+                rotation = entry[4] if len(entry) > 4 else None
                 placement = dict(fixture=cab, size=size, pos=pos)
+                if rotation is not None:
+                    # Default is a +-45 deg draw (env_utils.py), which is
+                    # fine for anything that looks the same from every side
+                    # and useless for anything whose identity is printed on
+                    # one face. A scalar here fixes the yaw exactly; a
+                    # (lo, hi) pair narrows the draw without fixing it.
+                    placement["rotation"] = rotation
                 if shelf is not None:
                     # Targeting a shelf ABOVE the bottom one needs both
                     # arguments. reset_region_names picks the shelf; z_range
@@ -529,14 +573,15 @@ class MessymemUpperRow(Kitchen):
                         reset_region_names=(shelf,), z_range=None)
                 cfgs.append(dict(
                     name=f"{cab_id}_in{i}_{group}",
-                    obj_groups=self._obj_spec(group),
+                    obj_groups=self._obj_spec(spec),
                     graspable=group in self._GRASPABLE,
                     placement=placement,
                 ))
-            for i, group in enumerate(self._FIXED_COUNTER.get(cab_id, [])):
+            for i, spec in enumerate(self._FIXED_COUNTER.get(cab_id, [])):
+                group = _base_group(spec)
                 cfgs.append(dict(
                     name=f"{cab_id}_on{i}_{group}",
-                    obj_groups=self._obj_spec(group),
+                    obj_groups=self._obj_spec(spec),
                     graspable=group in self._GRASPABLE,
                     placement=dict(
                         fixture=self.counter,
@@ -666,6 +711,14 @@ class MessymemTwentyCabinets(MessymemUpperRow):
 _WEDGE = (0.15, 0.30)
 _PIN = (0.12, 0.30)
 _LOOSE = (0.20, 0.30)
+
+# Windows for the matching shelves. A 0.70 m usable shelf divides into five
+# 0.12 m windows (centres 0.145 m apart) or four 0.16 m ones (0.181 m
+# apart); the widest thing placed on either is 0.079 m, so neither spacing
+# can collide. Remember that pos is normalised against
+# (shelf_width - window_width) / 2 — a WIDER window means LESS spread.
+_SHELF = (0.12, 0.28)
+_SHELF_WIDE = (0.16, 0.28)
 
 
 class MessymemLongHorizonTenCabinets(MessymemTenCabinets):
@@ -807,14 +860,88 @@ class MessymemLongHorizonTenCabinets(MessymemTenCabinets):
         "syrup_bottle": "objects/aigen_objs/syrup_bottle/syrup_bottle_8/model.xml",
         "salt_and_pepper_shaker": "objects/lightwheel/salt_and_pepper_shaker/PepperShaker006/model.xml",
         "oil_and_vinegar_bottle": "objects/lightwheel/oil_and_vinegar_bottle/OilBottle005/model.xml",
+
+        # ── object_matching triples ───────────────────────────────────────
+        # Seven categories, three unmistakably different variants each,
+        # spread over three cabinets so that neither the category name nor
+        # the cabinet's theme identifies which one is meant. See
+        # README_object_matching.md.
+        #
+        # Two kinds of discriminator, and the difference is load-bearing:
+        #
+        #   COLOUR survives into the scene graph. The analyzer writes a
+        #   `description` per item and those descriptions really do say
+        #   "yellow squeeze bottle" / "white jar with a blue lid".
+        #
+        #   BRANDING does not. Across a whole 10-cabinet run the analyzer
+        #   never once wrote a brand name — a Campbell's tin came back as
+        #   "small silver cylindrical can".
+        #
+        # So a two-variant colour split would leak: "the red can" answers
+        # itself off the contents list. The THIRD variant is what closes
+        # that — with a plain red can in the room as well as the Coke, the
+        # logo is the only thing that separates them, and the logo lives
+        # only in the keyframes. Do not "simplify" a triple back to a pair.
+        "can#coke":            "objects/objaverse/can/can_15/model.xml",
+        "can#pepsi":           "objects/objaverse/can/can_17/model.xml",
+        "can#plain":           "objects/objaverse/can/can_16/model.xml",
+
+        "coffee_cup#starbucks": "objects/objaverse/coffee_cup/coffee_cup_9/model.xml",
+        "coffee_cup#kraft":     "objects/objaverse/coffee_cup/coffee_cup_14/model.xml",
+        "coffee_cup#plain":     "objects/objaverse/coffee_cup/coffee_cup_16/model.xml",
+
+        # Cereal is the one class whose identity is printed on a single
+        # face, hence the pinned rotation on every cereal placement below.
+        "cereal#corn_flakes":  "objects/objaverse/cereal/cereal_11/model.xml",
+        "cereal#fruit_loops":  "objects/objaverse/cereal/cereal_7/model.xml",
+        "cereal#trix":         "objects/objaverse/cereal/cereal_12/model.xml",
+
+        # All three mustards are yellow on purpose: the contents list reads
+        # "yellow mustard bottle" three times and carries no signal at all.
+        "mustard#labelled":    "objects/lightwheel/mustard/Mustard001/model.xml",
+        "mustard#plain":       "objects/lightwheel/mustard/Mustard003/model.xml",
+        "mustard#graphic":     "objects/lightwheel/mustard/Mustard008/model.xml",
+
+        "mug#red":             "objects/objaverse/mug/mug_13/model.xml",
+        "mug#teal":            "objects/objaverse/mug/mug_15/model.xml",
+        "mug#yellow":          "objects/objaverse/mug/mug_11/model.xml",
+
+        "juice#grape":         "objects/lightwheel/juice/Juice012/model.xml",
+        "juice#orange":        "objects/lightwheel/juice/Juice007/model.xml",
+        "juice#cranberry":     "objects/lightwheel/juice/Juice006/model.xml",
+
+        # Reusable flask / disposable PET / squeeze sports bottle — three
+        # different *kinds* of water bottle, so "the reusable one" and "the
+        # recyclable one" are separate questions off one triple. The
+        # disposable one is the only aigen model in the set; the SG label
+        # is "water bottle" for all three, so the registry does not leak.
+        "water_bottle#reusable":   "objects/objaverse/water_bottle/water_bottle_21/model.xml",
+        "water_bottle#disposable": "objects/aigen_objs/water_bottle/water_bottle_4/model.xml",
+        "water_bottle#sports":     "objects/objaverse/water_bottle/water_bottle_22/model.xml",
     }
+
+    # Yaw for the cereal boxes, in radians, measured in the placement
+    # sampler's frame. 0.0 leaves the box at the sampler's reference
+    # orientation. If the boxes come up showing their nutrition panels,
+    # nudge this by pi (or +-pi/2) — one number, every cereal follows it.
+    _CEREAL_YAW = 0.0
 
     _FIXED_CONTENTS = {
         # ── condiments — ketchup WEDGED between its two neighbours ────────
         "cab_001": [
-            ("mustard",    (-0.35, 0.0), _WEDGE),
-            ("ketchup",    ( 0.00, 0.0), _PIN),
-            ("mayonnaise", ( 0.35, 0.0), _WEDGE),
+            ("mustard#labelled", (-0.35, 0.0), _WEDGE),
+            ("ketchup",          ( 0.00, 0.0), _PIN),
+            ("mayonnaise",       ( 0.35, 0.0), _WEDGE),
+            # ── matching shelf ──────────────────────────────────────────
+            # Four of the seven triples put a leg here. This shelf was
+            # empty, which is why it absorbs the most; level0 above is
+            # untouched so the cabinet still reads as "condiments" for the
+            # put-away sub-tasks. 4 x 0.16 m = 0.64 of a 0.70 m shelf.
+            ("can#coke",          (-1.00, 0.0), _SHELF_WIDE, "level1"),
+            ("cereal#fruit_loops", (-0.33, 0.0), _SHELF_WIDE, "level1",
+             _CEREAL_YAW),
+            ("mug#yellow",        ( 0.33, 0.0), _SHELF_WIDE, "level1"),
+            ("juice#grape",       ( 1.00, 0.0), _SHELF_WIDE, "level1"),
         ],
         "cab_002": [],
         # ── baking — LOCKED, ground truth only, never observable ──────────
@@ -828,13 +955,21 @@ class MessymemLongHorizonTenCabinets(MessymemTenCabinets):
         # (z ~ 1.72). level2 (z ~ 2.01) is deliberately left empty: see the
         # shelf note in _get_obj_cfgs_fixed.
         "cab_004": [
-            ("cereal",        (-0.60, 0.0), _LOOSE),
+            # The pantry's own cereal is the Trix — the DECOY for
+            # match_cereal. Its target (Corn Flakes) lives in cab_009, so a
+            # planner that reasons "cereal belongs in the pantry" is wrong.
+            ("cereal#trix",   (-0.60, 0.0), _LOOSE, None, _CEREAL_YAW),
             ("spaghetti_box", (-0.20, 0.0), _LOOSE),
             ("bagged_food",   ( 0.20, 0.0), _LOOSE),
             ("chips",         ( 0.60, 0.0), _LOOSE),
-            ("canned_food",  (-0.45, 0.0), (0.16, 0.28), "level1"),
-            ("honey_bottle", ( 0.10, 0.0), (0.16, 0.28), "level1"),
-            ("jam",          ( 0.65, 0.0), (0.16, 0.28), "level1"),
+            # Level1 goes from 3 items to 5, so the windows narrow from
+            # 0.16 to 0.12 and all five re-space evenly. Widest occupant is
+            # the reusable bottle at 0.070 m; spacing is 0.145 m.
+            ("canned_food",             (-1.00, 0.0), _SHELF, "level1"),
+            ("honey_bottle",            (-0.50, 0.0), _SHELF, "level1"),
+            ("jam",                     ( 0.00, 0.0), _SHELF, "level1"),
+            ("coffee_cup#starbucks",    ( 0.50, 0.0), _SHELF, "level1"),
+            ("water_bottle#reusable",   ( 1.00, 0.0), _SHELF, "level1"),
         ],
         "cab_005": [],
         # ── dishes & food containers ──────────────────────────────────────
@@ -861,8 +996,16 @@ class MessymemLongHorizonTenCabinets(MessymemTenCabinets):
             # centres 0.18 m apart — closer than their combined radii, and
             # the sampler rejects the overlap. Pinning to the extremes gives
             # 0.43 m of separation. Widen a window and this spread SHRINKS.
-            ("bowl",  (-1.00, 0.0), (0.24, 0.28), "level1"),
-            ("plate", ( 1.00, 0.0), (0.30, 0.30), "level1"),
+            # The bowl keeps its end of the shelf. The second plate that
+            # used to sit at the other end is gone: cab_006 already reads
+            # as dinnerware from level0 and from this bowl, and the plate
+            # was a duplicate that ground_truth_contents deduplicated away
+            # anyway. Dropping it frees 0.28 m — the only slack in the
+            # whole budget, and it goes to three matching legs.
+            ("bowl",                     (-1.00, 0.0), (0.24, 0.28), "level1"),
+            ("mustard#plain",            (-0.10, 0.0), _SHELF, "level1"),
+            ("mug#red",                  ( 0.45, 0.0), _SHELF, "level1"),
+            ("water_bottle#disposable",  ( 1.00, 0.0), _SHELF, "level1"),
         ],
         # ── spices — LOCKED, ground truth only ────────────────────────────
         "cab_007": [
@@ -880,13 +1023,31 @@ class MessymemLongHorizonTenCabinets(MessymemTenCabinets):
             ("lime",    ( 0.15,  0.00), _WEDGE),
             ("apple",   ( 0.50,  0.00), _WEDGE),
             ("banana",  ( 0.85,  0.00), _WEDGE),
+            # ── matching shelf ──────────────────────────────────────────
+            # The other empty level1, and the home of three targets. The
+            # Corn Flakes being HERE rather than in the pantry is the whole
+            # point of match_cereal_trix's sibling; the orange juice being
+            # here is the decoy for match_juice_grape, since fruit is
+            # exactly where a category-reasoning planner would look.
+            # Level0 is untouched — the ketchup keeps its clear side
+            # access for pick_ketchup_accessible.
+            ("coffee_cup#plain",    (-1.00, 0.0), _SHELF, "level1"),
+            ("cereal#corn_flakes",  (-0.50, 0.0), _SHELF, "level1",
+             _CEREAL_YAW),
+            ("mustard#graphic",     ( 0.00, 0.0), _SHELF, "level1"),
+            ("juice#orange",        ( 0.50, 0.0), _SHELF, "level1"),
+            ("can#pepsi",           ( 1.00, 0.0), _SHELF, "level1"),
         ],
         # ── cups & glasses — holds the teapot, sub-task 1's target ────────
         "cab_010": [
-            ("teapot",     (-0.55, 0.0), _LOOSE),
-            ("mug",        (-0.10, 0.0), _LOOSE),
-            ("coffee_cup", ( 0.35, 0.0), _LOOSE),
-            ("glass_cup",  ( 0.80, 0.0), _LOOSE),
+            ("teapot",              (-0.55, 0.0), _LOOSE),
+            # The cups cabinet is the OBVIOUS home for a mug and a coffee
+            # cup, so both of its cups are decoys — the matching targets
+            # are in cab_006 and cab_004. Same models as before in every
+            # respect except which variant they point at.
+            ("mug#teal",            (-0.10, 0.0), _LOOSE),
+            ("coffee_cup#kraft",    ( 0.35, 0.0), _LOOSE),
+            ("glass_cup",           ( 0.80, 0.0), _LOOSE),
             # Spice rack on the shelf above the cups. Six items across a
             # 0.70 m usable shelf: with a 0.12 m window the usable half-span
             # is 0.29 m, so evenly spacing pos over [-1, 1] leaves 0.116 m
@@ -897,12 +1058,21 @@ class MessymemLongHorizonTenCabinets(MessymemTenCabinets):
             # exists only inside locked cab_007, which is what makes
             # find_paprika_unreachable a genuine "cannot be reached"
             # sub-task rather than a findable one.
+            # Three of the six spices made way for the third leg of three
+            # triples, at the SAME positions and window sizes — this shelf
+            # already packed, so reusing its geometry keeps a known-good
+            # arrangement. Dropped: salt_and_pepper_shaker and shaker (both
+            # still on cab_007's counter, so still in the room) and
+            # syrup_bottle (leaves the scene; nothing referenced it).
+            # cinnamon STAYS: paprika has to remain the one spice that
+            # exists only inside a locked cabinet, which is what makes
+            # find_paprika_unreachable unreachable-for-a-reason.
             ("turmeric",               (-1.00, 0.0), (0.12, 0.26), "level1"),
             ("oil_and_vinegar_bottle", (-0.60, 0.0), (0.12, 0.26), "level1"),
-            ("salt_and_pepper_shaker", (-0.20, 0.0), (0.12, 0.26), "level1"),
-            ("syrup_bottle",           ( 0.20, 0.0), (0.12, 0.26), "level1"),
+            ("can#plain",              (-0.20, 0.0), (0.12, 0.26), "level1"),
+            ("juice#cranberry",        ( 0.20, 0.0), (0.12, 0.26), "level1"),
             ("cinnamon",               ( 0.60, 0.0), (0.12, 0.26), "level1"),
-            ("shaker",                 ( 1.00, 0.0), (0.12, 0.26), "level1"),
+            ("water_bottle#sports",    ( 1.00, 0.0), (0.12, 0.26), "level1"),
         ],
     }
 
@@ -914,10 +1084,26 @@ class MessymemLongHorizonTenCabinets(MessymemTenCabinets):
     # recoverable by exact match; the rest (bread, spoon, ladle, whisk,
     # croissant, fork, cutting_board) have no duplicate and require
     # reasoning about what the cabinet is FOR.
+    # Three of these are MATCHING PROBES — the object a counter-referencing
+    # instruction points at ("the mug on the counter next to the bread").
+    # They are the reason those sub-tasks need keyframes at all: a counter
+    # object's scene-graph node is `label` + `pos` and nothing else, so its
+    # appearance exists only in the frames captured during the sweep.
+    #
+    # Each probe is pinned to the same model as its target in a cabinet, and
+    # sits under a DIFFERENT cabinet from that target so proximity gives
+    # nothing away. The instruction names a neighbour ("next to the bread")
+    # rather than the attribute — saying "the red mug" would hand the answer
+    # to a planner that never looked.
+    #
+    # cab_008's mug is deliberately left untagged and unchanged: it belongs
+    # to put_mug_away, which routes it to cab_010 by CATEGORY. match_mug
+    # routes a different mug to cab_006 by APPEARANCE, so the two must not
+    # share an object or they contradict each other.
     _FIXED_COUNTER = {
-        "cab_002": ["bread", "spoon", "orange"],
-        "cab_003": ["fork", "knife", "avocado"],
-        "cab_005": ["bowl", "ladle", "plate"],
+        "cab_002": ["bread", "spoon", "orange", "mug#red"],
+        "cab_003": ["fork", "knife", "avocado", "mustard#plain"],
+        "cab_005": ["bowl", "ladle", "plate", "coffee_cup#starbucks"],
         "cab_007": ["croissant", "pineapple", "salt_and_pepper_shaker", "shaker"],
         "cab_008": ["mug", "whisk", "tomato"],
     }
