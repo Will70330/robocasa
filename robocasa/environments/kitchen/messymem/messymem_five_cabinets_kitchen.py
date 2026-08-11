@@ -43,7 +43,7 @@ from robocasa.environments.kitchen.messymem.messymem_five_cabinets import (
 # excludes every base starting with "counter", by design.
 NAMED_REGIONS = {
     "counter_next_to_sink_0": dict(
-        fixture="counter_left", label="counter",
+        fixture="counter_left", label="counter next to sink",
         x=(-1.00, -0.35), y=(-3.30, 0.00), z=(0.90, 1.40),
         description="the clear stretch of counter between the sink and the "
                     "back wall",
