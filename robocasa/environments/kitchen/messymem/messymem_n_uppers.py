@@ -940,6 +940,17 @@ class MessymemLongHorizonTenCabinets(MessymemTenCabinets):
             ("can#coke",          (-1.00, 0.0), _SHELF_WIDE, "level1"),
             ("cereal#fruit_loops", (-0.33, 0.0), _SHELF_WIDE, "level1",
              _CEREAL_YAW),
+            # `y` IS NOT A DEPTH KNOB HERE — measured, do not retry it.
+            # This mug sits 0.22 m past the cabinet's front face, which is
+            # a 0.79 m pre-grasp against a 0.85 m limit and the tightest
+            # margin of any target we use. The obvious fix is to pull it
+            # forward with y, and it does not work: y = 0.0 gives depth
+            # 0.222 and y = +1.0 gives 0.227 — five millimetres, and the
+            # wrong way. Shrinking the window to (0.16, 0.10) to pin it
+            # harder makes placement infeasible outright (50 failed
+            # _load_model attempts). The sampler clips to the shelf's own
+            # placement region, and that region is what sets the depth.
+            # Anything on this shelf will sit about this far back.
             ("mug#yellow",        ( 0.33, 0.0), _SHELF_WIDE, "level1"),
             ("juice#grape",       ( 1.00, 0.0), _SHELF_WIDE, "level1"),
         ],
