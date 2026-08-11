@@ -1019,6 +1019,12 @@ from robocasa.environments.kitchen.messymem.messymem_n_uppers import (
     MessymemTwentyCabinets,
     MessymemLongHorizonTenCabinets,
 )
+from robocasa.environments.kitchen.messymem.messymem_five_cabinets import (
+    MessymemFiveCabinets,
+)
+from robocasa.environments.kitchen.messymem.messymem_five_cabinets_kitchen import (
+    MessymemFiveCabinetsKitchen,
+)
 from robocasa.environments.kitchen.messymem.inspect_cabinet import (
     InspectCabinet,
 )
