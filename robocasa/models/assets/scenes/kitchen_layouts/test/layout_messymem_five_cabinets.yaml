@@ -1,0 +1,222 @@
+# layout_messymem_five_cabinets.yaml  —  layout 75
+#
+# U-shaped kitchen: 3 uppers on the back wall, 2 uppers on the front wall
+# offset into the back wall's gaps, and a sink counter on the left wall
+# joining the two runs.
+#
+#   room      x [-1.00, 6.50]   y [-5.00, 0.00]
+#   back wall (y=0)     cab_001 x=1.15   cab_002 x=2.75   cab_003 x=4.35
+#   front wall (y=-5)   cab_004 x=1.95   cab_005 x=3.55   fridge x=5.20
+#   left wall (x=-1)    counter y [-5, 0], sink centred at y=-3.75
+#
+# The cabinet run is pulled toward the sink wall, which opens a 0.83 m
+# gap between cab_005 and the fridge and 2.15 m of bare counter past
+# cab_003. wall_right sits at x=6.50 so the fridge has 0.87 m of open
+# floor beside it instead of being jammed into the corner.
+#
+# Cabinets are 0.8 m wide at 1.6 m pitch, i.e. separated by exactly one
+# cabinet width. cab_004/cab_005 sit at the midpoints of those gaps, so
+# facing one wall never lines a cabinet up with one behind it.
+#
+# Counter depth 0.65 / height 0.92 and cabinet depth 0.40 / z 1.85 are
+# unchanged from layouts 68 and 72, so OpenCabinet / Inspect / Pick /
+# Place standoffs carry over. Ids are zero-padded for the same reason as
+# layout 72: Kitchen.get_fixture matches by substring.
+#
+# Notes:
+#   - Counters use hollow [false, false] (solid base). Layouts 68/72 take
+#     the default [false, true], which leaves a floating top slab. The
+#     base parks ~0.3 m off the counter face so a solid base is not in
+#     its way.
+#   - The left counter sets overhang 0. Its default 5 cm lip points at
+#     world +x and would z-fight the back and front counter tops.
+#   - wall_front keeps enclosing_wall: true. That flag is render-only
+#     (EnclosingWallRenderWrapper), so the cabinets on it are unaffected.
+#   - The arena's fixed `scene_overview` camera sits at y=-4.0 facing +y,
+#     so it sees the back wall but not the front-wall cabinets.
+
+room:
+  walls:
+    - name: wall
+      type: wall
+      size: [3.75, 1.5, 0.02]
+      pos: [2.75, 0, 1.5]
+
+    - name: wall_backing
+      type: wall
+      backing: true
+      backing_extended: [true, true]
+      size: [3.75, 1.5, 0.1]
+      pos: [2.75, 0, 1.5]
+
+    - name: wall_left
+      type: wall
+      wall_side: left
+      size: [2.5, 1.5, 0.02]
+      pos: [-1.0, -2.5, 1.5]
+
+    - name: wall_left_backing
+      type: wall
+      backing: true
+      wall_side: left
+      size: [2.5, 1.5, 0.1]
+      pos: [-1.0, -2.5, 1.5]
+
+    - name: wall_right
+      type: wall
+      wall_side: right
+      size: [2.5, 1.5, 0.02]
+      pos: [6.5, -2.5, 1.5]
+
+    - name: wall_right_backing
+      type: wall
+      backing: true
+      wall_side: right
+      size: [2.5, 1.5, 0.1]
+      pos: [6.5, -2.5, 1.5]
+
+    - name: wall_front
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      size: [3.75, 1.5, 0.02]
+      pos: [2.75, -5.0, 1.5]
+
+    - name: wall_front_backing
+      type: wall
+      wall_side: front
+      enclosing_wall: true
+      backing: true
+      backing_extended: [true, true]
+      size: [3.75, 1.5, 0.1]
+      pos: [2.75, -5.0, 1.5]
+
+  floor:
+    - name: floor
+      type: floor
+      size: [3.75, 2.5, 0.02]
+      pos: [2.75, -2.5, 0]
+
+    - name: floor_backing
+      type: floor
+      backing: true
+      size: [3.75, 2.5, 0.1]
+      pos: [2.75, -2.5, 0]
+
+  # z 1.2-1.3 — above the counter top (0.92), below the cabinet
+  # undersides (1.39), and placed in the gaps between cabinets.
+  wall_accessories:
+    - name: outlet
+      type: wall_accessory
+      attach_to: wall
+      pos: [1.95, null, 1.2]
+
+    - name: light_switch
+      type: wall_accessory
+      config_name: light_switch
+      attach_to: wall
+      pos: [3.55, null, 1.2]
+
+    - name: utensil_rack
+      type: utensil_rack
+      attach_to: wall
+      pos: [0.20, null, 1.3]
+
+  # No stools: their floor footprint blocks the mobile base, same reason
+  # they were dropped from layouts 68 and 72.
+
+# ── back wall (y = 0) — 3 uppers ──────────────────────────────────────
+main_group:
+  bottom_row:
+    # x [-0.35, 6.50]. Starts where the left counter ends.
+    - name: counter_back
+      type: counter
+      hollow: [false, false]
+      size: [6.85, 0.65, 0.92]
+      pos: [3.075, -0.325, 0.46]
+
+  top_row:
+    - name: cab_001
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [1.15, -0.2, 1.85]
+
+    - name: cab_002
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [2.75, -0.2, 1.85]
+
+    - name: cab_003
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [4.35, -0.2, 1.85]
+
+# ── front wall (y = -5) — 2 uppers + fridge ───────────────────────────
+# group_z_rot = pi, so world_x = -local_x and world_y = -5 - local_y.
+# Local x is written negative; the world x is given per fixture.
+front_group:
+  group_origin: [0, 0]
+  group_pos: [0, -5.0]
+  group_z_rot: 3.1415
+
+  bottom_row:
+    # world x [-0.35, 4.775], stopping where the fridge starts.
+    - name: counter_front
+      type: counter
+      hollow: [false, false]
+      size: [5.125, 0.65, 0.92]
+      pos: [-2.2125, -0.325, 0.46]
+
+    # local `left` is world +x, i.e. the far corner by wall_right.
+    - name: fridge
+      type: fridge_french_door
+      size: [0.85, 0.80, 1.78]
+      offset: [-0.005, 0.0, 0.0]
+      align_to: counter_front
+      side: left
+      alignment: bottom_back
+
+  top_row:
+    # world x = 1.95 — midpoint of the cab_001/cab_002 gap
+    - name: cab_004
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [-1.95, -0.2, 1.85]
+
+    # world x = 3.55 — midpoint of the cab_002/cab_003 gap
+    - name: cab_005
+      type: hinge_cabinet
+      default_config_name: cab_top
+      size: [0.8, 0.4, 0.92]
+      pos: [-3.55, -0.2, 1.85]
+
+# ── left wall (x = -1) — sink counter joining the two runs ────────────
+# group_z_rot = pi/2, so world_x = -1 - local_y and world_y = -5 + local_x.
+# Local +x runs from the front wall toward the back wall.
+left_group:
+  group_origin: [0, 0]
+  group_pos: [-1.0, -5.0]
+  group_z_rot: 1.5708
+
+  bottom_row:
+    # Declared before the counter — interior_obj resolves by name against
+    # fixtures already built in this group.
+    - name: sink
+      type: sink
+
+    # world x [-1.00, -0.35], y [-5.00, 0.00].
+    # obj_x_percent runs front -> back, so 0.25 puts the sink toward the
+    # 2-cabinet (front) wall; it lands at world y = -3.75.
+    - name: counter_left
+      type: counter
+      hollow: [false, false]
+      overhang: 0
+      interior_obj: sink
+      obj_x_percent: 0.25
+      obj_y_percent: 0.01
+      size: [5.0, 0.65, 0.92]
+      pos: [2.5, -0.325, 0.46]

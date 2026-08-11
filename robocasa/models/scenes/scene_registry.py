@@ -88,6 +88,11 @@ class LayoutType(IntEnum):
     LAYOUT_MESSYMEM_TEN_UPPERS = 72
     LAYOUT_MESSYMEM_FIFTEEN_UPPERS = 73
     LAYOUT_MESSYMEM_TWENTY_UPPERS = 74
+    LAYOUT_MESSYMEM_FIVE_CABINETS = 75
+    # layouts 2 / 4 / 5 with their `is_clutter` objects removed
+    LAYOUT_MESSYMEM_L002_CLEAN = 76
+    LAYOUT_MESSYMEM_L004_CLEAN = 77
+    LAYOUT_MESSYMEM_L005_CLEAN = 78
 
     # negative values correspond to groups (see LAYOUT_GROUPS_TO_IDS)
     TEST = -1
